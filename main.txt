@@ -1,0 +1,174 @@
+package main
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"sync"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+)
+
+type Message struct {
+	SdID    string `json:"send_id"`
+	RcID    string `json:"recv_id"`
+	Content string `json:"content"`
+	Type    string `json:"type"`
+	Time    int64  `json:"time"`
+}
+
+type Client struct {
+	Conn     *websocket.Conn
+	Userinfo string // user information
+	Send     chan Message
+}
+
+type Hub struct {
+	Clients    map[*Client]bool // deal with Clients
+	Broadcast  chan Message
+	Register   chan *Client
+	Unregister chan *Client
+	mutex      sync.Mutex
+}
+
+var hub = Hub{
+	Clients:    make(map[*Client]bool),
+	Broadcast:  make(chan Message),
+	Register:   make(chan *Client),
+	Unregister: make(chan *Client),
+}
+
+func (h *Hub) Run() {
+	for {
+		select {
+		case client := <-h.Register:
+			h.mutex.Lock()
+			h.Clients[client] = true
+			h.mutex.Unlock()
+			log.Printf("user %s connect,  online %d", client.Userinfo, len(h.Clients))
+
+		case client := <-h.Unregister:
+			h.mutex.Lock()
+			if _, ok := h.Clients[client]; ok {
+				delete(h.Clients, client)
+				close(client.Send)
+			}
+			h.mutex.Unlock()
+			log.Printf("user %s disconnect,  online %d", client.Userinfo, len(h.Clients))
+
+		case message := <-h.Broadcast:
+			h.mutex.Lock()
+			for client := range h.Clients {
+				select {
+				case client.Send <- message:
+				default:
+					close(client.Send)
+					delete(h.Clients, client)
+				}
+			}
+			h.mutex.Unlock()
+		}
+	}
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+func wsHandler(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Printf("wrong with webscoket ", err)
+		return
+	}
+	userinfo := c.Query("userinfo")
+	if userinfo == "" {
+		userinfo = "none"
+	}
+
+	client := &Client{
+		Conn:     conn,
+		Userinfo: userinfo,
+		Send:     make(chan Message, 256),
+	}
+
+	hub.Register <- client
+
+	go client.writePump()
+
+	client.ReadPumb()
+}
+
+func (m *Message) Encode() ([]byte, error) {
+	return json.Marshal(m)
+}
+
+func DecodeMessage(data []byte) (*Message, error) {
+	var msg Message
+	if err := json.Unmarshal(data, &msg); err != nil {
+		return nil, err
+	}
+	return &msg, nil
+}
+
+func (c *Client) ReadPumb() {
+	defer func() {
+		hub.Unregister <- c
+		c.Conn.Close()
+	}()
+	for {
+		_, msgBytes, err := c.Conn.ReadMessage()
+		if err != nil {
+			log.Println("wrong_read:", err)
+			break
+		}
+		msg, err := DecodeMessage(msgBytes)
+		if err != nil {
+			log.Println("wrong_n_decode:", err)
+			continue
+		}
+		msg.SdID = c.Userinfo
+		msg.Time = 0
+
+		hub.Broadcast <- *msg
+	}
+}
+
+func (c *Client) writePump() {
+	defer c.Conn.Close()
+
+	for {
+		select {
+		case message, ok := <-c.Send:
+			if !ok {
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			if err := c.Conn.WriteJSON(message); err != nil {
+				log.Printf("wrong in write", err)
+				return
+			}
+		}
+	}
+}
+
+func main() {
+	go hub.Run()
+
+	r := gin.Default()
+	r.GET("/ws", wsHandler)
+
+	r.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, `IM test !!!<br>
+		请用 WebSocket 连接 /ws?username=无意义<br>
+		发送 JSON 示例: {"type":"chat","content":"你好呀"}`)
+	})
+
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal(err)
+	}
+}
