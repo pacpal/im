@@ -62,7 +62,7 @@ func (ws *wsHandler) HandleWs(c *gin.Context) {
 	userID := claims["sub"].(string)
 
 	client := ws.Hub.Register(conn, userID)
-	client.OnMessage = ws.msgService.RouteMessage
+
 	client.Start()
 
 }

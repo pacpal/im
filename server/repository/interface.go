@@ -20,3 +20,7 @@ type GroupRepo interface {
 	IsMember(ctx context.Context, gid, uid string) (bool, error)
 	SaveGroup(ctx context.Context, user *model.Group) error
 }
+type MsgRepo interface {
+	GetOfflineMsgs(ctx context.Context, uid string) (*[]model.Message, error)
+	ClearOfflineMsgs(ctx context.Context, uid string)
+}

@@ -4,45 +4,69 @@ import (
 	"IM/server/model"
 	"IM/server/msgservice/hub"
 	repo "IM/server/repository"
+	"context"
 	"fmt"
 )
 
 type MessageService struct {
-	UserRepo repo.UserRepo
-	Hub      *hub.Hub
+	MsgRepo repo.MsgRepo
+	Hub     *hub.Hub
 }
 
-func NewMessageService(ur repo.UserRepo) *MessageService {
-	return &MessageService{UserRepo: ur}
+func NewMessageService(ur repo.MsgRepo) *MessageService {
+	return &MessageService{MsgRepo: ur}
 }
-func (s *MessageService) RouteMessage(msg model.Message) error {
+func (s *MessageService) RouteMessage(ctx context.Context, msg model.Message) error {
 	if msg.RcID == "" || msg.SdID == "" || msg.Content == "" {
 		return fmt.Errorf("invalid message")
 	}
 	switch msg.Type {
 	case "private":
-		return s.routePrivate(msg)
+		return s.routePrivate(ctx, msg)
 	case "Group":
-		return s.routeGroup(msg)
+		return s.routeGroup(ctx, msg)
 	default:
 	}
 	return fmt.Errorf("unknown message type: %s", msg.Type)
 }
-func (s *MessageService) routePrivate(msg model.Message) error {
+func (s *MessageService) routePrivate(ctx context.Context, msg model.Message) error {
 	//CheckFriendship
 	if client, online := s.Hub.GetOnlineClient(msg.RcID); online {
 		select {
 		case client.Send <- msg:
 		default:
-			s.CacheOffline(msg)
+			s.CacheOffline(ctx, msg)
 		}
-		s.CacheOffline(msg)
+		s.CacheOffline(ctx, msg)
 	}
 	return nil
 }
-func (s *MessageService) routeGroup(msg model.Message) error {
+func (s *MessageService) routeGroup(ctx context.Context, msg model.Message) error {
+	//CheckGroup
+	members, _ := s.Hub.GetGroupMembers(ctx, msg.RcID)
+	for member := range members {
+		if client, online := s.Hub.GetOnlineClient(member); online {
+			select {
+			case client.Send <- msg:
+			default:
+				s.CacheOffline(ctx, msg)
+			}
+			s.CacheOffline(ctx, msg)
+		}
+	}
 	return nil
 }
-func (s *MessageService) CacheOffline(msg model.Message) {
+func (s *MessageService) CacheOffline(ctx context.Context, msg model.Message) {
+}
+func (s *MessageService) GetOfflineMsgs(ctx context.Context, uid string) (*[]model.Message, error) {
+	msgs, err := s.MsgRepo.GetOfflineMsgs(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+	s.MsgRepo.ClearOfflineMsgs(ctx, uid)
+
+	return msgs, nil
+}
+func (s *MessageService) GetOnlineStatus(ctx context.Context, uid string) (*[]string, error) {
 
 }
