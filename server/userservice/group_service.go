@@ -1,4 +1,4 @@
-// Package userservice for normal user oprate
+// Package userservice for normal user oprate and relationship...后续优化
 package userservice
 
 import (
@@ -20,7 +20,7 @@ func NewGroupAppService(ur repo.UserRepo, gr repo.GroupRepo) *GroupService {
 }
 
 func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name string) (*model.Group, error) {
-	_, err := s.userRepo.GetByID(ctx, ownerID)
+	_, err := s.userRepo.GetUserByID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name string) (*
 		return nil, err
 	}
 	user.JoinGroup(gid)
-	if err := s.userRepo.SaveUser(ctx, user); err != nil {
+	if err := s.userRepo.RefreshUser(ctx, user); err != nil {
 		return nil, err
 	}
 	return group, nil
@@ -47,7 +47,7 @@ func (s *GroupService) GetGroup(ctx context.Context, gid string) (*model.Group, 
 }
 
 func (s *GroupService) JoinGroup(ctx context.Context, uid, gid, reason string) error {
-	_, err := s.userRepo.GetByID(ctx, uid)
+	_, err := s.userRepo.GetUserByID(ctx, uid)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (s *GroupService) LeaveGroup(ctx context.Context, uid, gid string) error {
 	if err := user.LeaveGroup(gid); err != nil {
 		return err
 	}
-	if err := s.userRepo.SaveUser(ctx, user); err != nil {
+	if err := s.userRepo.RefreshUser(ctx, user); err != nil {
 		return err
 	}
 
@@ -103,7 +103,7 @@ func (s *GroupService) ReplyGroupAdd(ctx context.Context, ownerID, uid, gid, rep
 		return err
 	}
 	user.JoinGroup(gid)
-	return s.userRepo.SaveUser(ctx, user)
+	return s.userRepo.RefreshUser(ctx, user)
 }
 
 func (s *GroupService) IsGroupMember(ctx context.Context, gid, uid string) (bool, error) {

@@ -33,7 +33,7 @@ func (s *UserService) Register(ctx context.Context, tele, password string) (*mod
 		Password: string(secretWord),
 		Tele:     tele,
 	}
-	if err := s.userRepo.SaveUser(ctx, user); err != nil {
+	if err := s.userRepo.RefreshUser(ctx, user); err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -93,7 +93,7 @@ func (s *UserService) RemoveFriend(ctx context.Context, uid, targetID string) er
 	if err := user.RemoveFriend(targetID); err != nil {
 		return err
 	}
-	return s.userRepo.SaveUser(ctx, user)
+	return s.userRepo.RefreshUser(ctx, user)
 }
 
 func (s *UserService) ReplyFriendAdd(ctx context.Context, uid, targetID, reply string) error {
@@ -107,7 +107,7 @@ func (s *UserService) ReplyFriendAdd(ctx context.Context, uid, targetID, reply s
 	if err := user.AddFriend(targetID); err != nil {
 		return err
 	}
-	if err := s.userRepo.SaveUser(ctx, user); err != nil {
+	if err := s.userRepo.RefreshUser(ctx, user); err != nil {
 		return err
 	}
 
@@ -118,7 +118,7 @@ func (s *UserService) ReplyFriendAdd(ctx context.Context, uid, targetID, reply s
 	if err := target.AddFriend(uid); err != nil {
 		return err
 	}
-	return s.userRepo.SaveUser(ctx, target)
+	return s.userRepo.RefreshUser(ctx, target)
 }
 
 func (s *UserService) CheckFriendship(ctx context.Context, uid1, uid2 string) (bool, error) {

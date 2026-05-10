@@ -7,12 +7,11 @@ import (
 )
 
 type UserRepo interface {
-	GetByID(ctx context.Context, uid string) (bool, error)
-	GetByName(ctx context.Context, name string) (bool, error)
-	CreateNew(ctx context.Context, uid, name string, password []byte) (bool, error)
+	Create(ctx context.Context, uid, name string, password []byte) (bool, error)
+	GetUserByName(ctx context.Context, name string) (*model.User, error)
 	GetUserByID(ctx context.Context, uid string) (*model.User, error)
 	GetUserByTele(ctx context.Context, tele string) (*model.User, error)
-	SaveUser(ctx context.Context, user *model.User) error
+	RefreshUser(ctx context.Context, user *model.User) error
 	//...
 }
 type GroupRepo interface {
@@ -23,4 +22,5 @@ type GroupRepo interface {
 type MsgRepo interface {
 	GetOfflineMsgs(ctx context.Context, uid string) (*[]model.Message, error)
 	ClearOfflineMsgs(ctx context.Context, uid string)
+	GetGroupByID(ctx context.Context, gid string) (*model.Group, error)
 }

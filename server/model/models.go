@@ -1,7 +1,9 @@
 // Package model store struct msg,user,group
 package model
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrUserNotFound    = errors.New("user not found")
@@ -15,31 +17,36 @@ var (
 )
 
 type Message struct {
-	SdID    string `json:"send_id"`
-	RcID    string `json:"receive_id"`
-	Content string `json:"content"`
-	Type    string `json:"type"`
-	Time    int64  `json:"time"`
+	ID      string `json:"msg_id" gorm:"column:id;primaryKey;size:64"`
+	SdID    string `json:"send_id" gorm:"column:send_id;size:64;not null"`
+	RcID    string `json:"receive_id" gorm:"column:receive_id;size:64;not null"`
+	Content string `json:"content" gorm:"column:content;type:text;not null"`
+	Type    string `json:"type" gorm:"column:type;size:20;not null"`
+	Time    int64  `json:"time" gorm:"column:time"`
 }
 
 type User struct {
-	ID       string          `json:"id"`
-	Name     string          `json:"name"`
-	Friends  map[string]bool `json:"friends,omitempty"`
-	Groups   map[string]bool `json:"groups,omitempty"`
-	Tele     string
-	Password string
+	ID       string `json:"id" gorm:"column:id;primaryKey;size:64"`
+	Name     string `json:"name" gorm:"column:name;size:100;not null"`
+	Tele     string `json:"tele" gorm:"column:tele;size:20;not null"`
+	Password string `gorm:"column:password;size:255;not null"`
+	//change
+	Friends map[string]bool `json:"friends,omitempty"`
+	Groups  map[string]bool `json:"groups,omitempty"`
 }
 
 type Group struct {
-	ID        string
-	Name      string
-	MemberIDs map[string]bool // key userid
+	ID          string          `json:"id" gorm:"size:64;primaryKey"`
+	Name        string          `json:"name" gorm:"size:100;not null"`
+	Description string          `json:"description" gorm:"type:text"`
+	OwnerID     string          `json:"ownerid" gorm:"size:64;not null"`
+	Type        string          `json:"type" gorm:"size:20;not null"`
+	ImageURL    string          `json:"imgurl"`
+	MemberIDs   map[string]bool // key userid
 	// MemberCache map[string]*UserCache
-	Description string
-	OwnerID     string
-	Type        string
-	ImageURL    string
+}
+type GroupMember struct {
+	GroupID string `gorm:"`
 }
 
 func NewGroup(id, name, ownerID string) *Group {

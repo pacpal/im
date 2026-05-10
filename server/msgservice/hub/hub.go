@@ -58,7 +58,3 @@ func (h *Hub) GetOnlineClient(uid string) (*Client, bool) {
 	c, ok := h.clients[uid]
 	return c, ok
 }
-func (h *Hub) GetGroupMembers(uid string) (*[]Client, bool) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-}

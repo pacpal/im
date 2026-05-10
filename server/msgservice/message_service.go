@@ -43,8 +43,8 @@ func (s *MessageService) routePrivate(ctx context.Context, msg model.Message) er
 }
 func (s *MessageService) routeGroup(ctx context.Context, msg model.Message) error {
 	//CheckGroup
-	members, _ := s.Hub.GetGroupMembers(ctx, msg.RcID)
-	for member := range members {
+	group, _ := s.MsgRepo.GetGroupByID(ctx, msg.RcID)
+	for member := range group.MemberIDs {
 		if client, online := s.Hub.GetOnlineClient(member); online {
 			select {
 			case client.Send <- msg:
@@ -68,5 +68,5 @@ func (s *MessageService) GetOfflineMsgs(ctx context.Context, uid string) (*[]mod
 	return msgs, nil
 }
 func (s *MessageService) GetOnlineStatus(ctx context.Context, uid string) (*[]string, error) {
-
+	return nil, nil
 }
