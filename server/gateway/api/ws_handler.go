@@ -20,7 +20,7 @@ var upgrader = websocket.Upgrader{
 				return true
 			}
 		}
-		log.Printf("wrong origin:%s", &origin)
+		log.Printf("wrong origin:%s", origin)
 		return false
 	},
 	ReadBufferSize:  1024,

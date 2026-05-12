@@ -1,8 +1,8 @@
-// Package model store struct msg,user,group
 package model
 
 import (
 	"errors"
+	"time"
 )
 
 var (
@@ -14,99 +14,132 @@ var (
 	ErrGroupNotFound   = errors.New("group not found")
 	ErrAlreadyMember   = errors.New("already member")
 	ErrNotMember       = errors.New("not member")
+	ErrRequestNotFound = errors.New("request not found")
+	ErrInvalidRequest  = errors.New("invalid request")
+	ErrMessageNotFound = errors.New("message not found")
+	ErrNotOwner        = errors.New("not group owner")
 )
 
 type Message struct {
-	ID      string `json:"msg_id" gorm:"column:id;primaryKey;size:64"`
-	SdID    string `json:"send_id" gorm:"column:send_id;size:64;not null"`
-	RcID    string `json:"receive_id" gorm:"column:receive_id;size:64;not null"`
-	Content string `json:"content" gorm:"column:content;type:text;not null"`
-	Type    string `json:"type" gorm:"column:type;size:20;not null"`
-	Time    int64  `json:"time" gorm:"column:time"`
+	ID        string    `json:"msg_id" gorm:"primaryKey;size:64"`
+	SdID      string    `json:"send_id" gorm:"column:send_id;size:64;not null;index"`
+	RcID      string    `json:"receive_id" gorm:"column:receive_id;size:64;not null;index"`
+	Content   string    `json:"content" gorm:"type:text;not null"`
+	Type      string    `json:"type" gorm:"size:20;not null;index"`
+	Time      int64     `json:"time" gorm:"not null;index"`
+	IsRead    bool      `json:"is_read" gorm:"default:false;index"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+}
+
+func (m *Message) TableName() string {
+	return "messages"
 }
 
 type User struct {
-	ID       string `json:"id" gorm:"column:id;primaryKey;size:64"`
-	Name     string `json:"name" gorm:"column:name;size:100;not null"`
-	Tele     string `json:"tele" gorm:"column:tele;size:20;not null"`
-	Password string `gorm:"column:password;size:255;not null"`
-	//change
-	Friends map[string]bool `json:"friends,omitempty"`
-	Groups  map[string]bool `json:"groups,omitempty"`
+	ID        string    `json:"id" gorm:"primaryKey;size:64"`
+	Name      string    `json:"name" gorm:"size:100;not null;index"`
+	Tele      string    `json:"tele" gorm:"size:20;not null;uniqueIndex"`
+	Password  string    `json:"-" gorm:"size:255;not null"`
+	AvatarURL string    `json:"avatar_url" gorm:"column:avatar_url;size:255"`
+	Status    int       `json:"status" gorm:"default:1"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	Friends []*User  `json:"friends,omitempty" gorm:"many2many:friendships;foreignKey:ID;joinForeignKey:user_id;references:ID;joinReferences:friend_id;"`
+	Groups  []*Group `json:"groups,omitempty" gorm:"many2many:group_members;foreignKey:ID;joinForeignKey:user_id;references:ID;joinReferences:group_id;"`
+}
+
+func (u *User) TableName() string {
+	return "users"
+}
+
+type Friendship struct {
+	UserID    string    `gorm:"primaryKey;type:varchar(64);column:user_id"`
+	FriendID  string    `gorm:"primaryKey;type:varchar(64);column:friend_id"`
+	Status    int       `gorm:"type:smallint;default:1;comment:'1:好友 2:拉黑'"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
+}
+
+func (f *Friendship) TableName() string {
+	return "friendships"
 }
 
 type Group struct {
-	ID          string          `json:"id" gorm:"size:64;primaryKey"`
-	Name        string          `json:"name" gorm:"size:100;not null"`
-	Description string          `json:"description" gorm:"type:text"`
-	OwnerID     string          `json:"ownerid" gorm:"size:64;not null"`
-	Type        string          `json:"type" gorm:"size:20;not null"`
-	ImageURL    string          `json:"imgurl"`
-	MemberIDs   map[string]bool // key userid
-	// MemberCache map[string]*UserCache
+	ID          string    `json:"id" gorm:"primaryKey;size:64"`
+	Name        string    `json:"name" gorm:"size:100;not null;index"`
+	Description string    `json:"description" gorm:"type:text"`
+	OwnerID     string    `json:"owner_id" gorm:"column:owner_id;size:64;not null;index"`
+	Type        string    `json:"type" gorm:"size:20;not null;default:'normal'"`
+	ImageURL    string    `json:"image_url" gorm:"column:image_url;size:255"`
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	Owner   *User   `json:"owner,omitempty" gorm:"foreignKey:OwnerID"`
+	Members []*User `json:"members,omitempty" gorm:"many2many:group_members;foreignKey:ID;joinForeignKey:group_id;references:ID;joinReferences:user_id;"`
 }
-type GroupMember struct {
-	GroupID string `gorm:"`
+
+func (g *Group) TableName() string {
+	return "groups"
 }
 
 func NewGroup(id, name, ownerID string) *Group {
-	g := &Group{
-		ID:        id,
-		Name:      name,
-		OwnerID:   ownerID,
-		MemberIDs: make(map[string]bool),
-		Type:      "normal",
+	return &Group{
+		ID:      id,
+		Name:    name,
+		OwnerID: ownerID,
+		Type:    "normal",
+		Members: make([]*User, 0),
 	}
-	g.MemberIDs[ownerID] = true
-	return g
-}
-func (u *User) AddFriend(uid string) error {
-	if u.Friends[uid] {
-		return ErrAlreadyFriend
-	}
-	u.Friends[uid] = true
-	return nil
 }
 
-func (u *User) RemoveFriend(uid string) error {
-	if !u.Friends[uid] {
-		return ErrNotFriend
-	}
-	delete(u.Friends, uid)
-	return nil
+type GroupMember struct {
+	GroupID  string    `gorm:"primaryKey;type:varchar(64);column:group_id"`
+	UserID   string    `gorm:"primaryKey;type:varchar(64);column:user_id"`
+	Role     int16     `gorm:"column:role;type:smallint;default:1;comment:'1:普通成员 2:管理员 3:群主'"`
+	JoinedAt time.Time `gorm:"autoCreateTime;column:joined_at"`
+	Nickname string    `gorm:"column:nickname;size:100"`
 }
 
-func (u *User) JoinGroup(gid string) error {
-	if u.Groups[gid] {
-		return ErrAlreadyMember
-	}
-	u.Groups[gid] = true
-	return nil
+func (gm *GroupMember) TableName() string {
+	return "group_members"
 }
 
-func (u *User) LeaveGroup(gid string) error {
-	if !u.Groups[gid] {
-		return ErrNotMember
-	}
-	delete(u.Groups, gid)
-	return nil
-}
-func (g *Group) AddMember(uid string) error {
-	if g.MemberIDs[uid] {
-		return ErrAlreadyMember
-	}
-	g.MemberIDs[uid] = true
-	return nil
+type FriendRequest struct {
+	ID        string    `json:"id" gorm:"primaryKey;size:64"`
+	FromUID   string    `json:"from_uid" gorm:"column:from_uid;size:64;not null;index"`
+	ToUID     string    `json:"to_uid" gorm:"column:to_uid;size:64;not null;index"`
+	Reason    string    `json:"reason" gorm:"type:text"`
+	Status    string    `json:"status" gorm:"size:20;not null;default:'pending';index"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
-func (g *Group) RemoveMember(uid string) error {
-	if !g.MemberIDs[uid] {
-		return ErrNotMember
-	}
-	delete(g.MemberIDs, uid)
-	return nil
+func (f *FriendRequest) TableName() string {
+	return "friend_requests"
 }
 
-func (g *Group) IsMember(uid string) bool {
-	return g.MemberIDs[uid]
+const (
+	FriendRequestPending  = "pending"
+	FriendRequestAccepted = "accepted"
+	FriendRequestRejected = "rejected"
+)
+
+type GroupJoinRequest struct {
+	ID        string    `json:"id" gorm:"primaryKey;size:64"`
+	UserID    string    `json:"user_id" gorm:"column:user_id;size:64;not null;index"`
+	GroupID   string    `json:"group_id" gorm:"column:group_id;size:64;not null;index"`
+	Reason    string    `json:"reason" gorm:"type:text"`
+	Status    string    `json:"status" gorm:"size:20;not null;default:'pending';index"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
+
+func (g *GroupJoinRequest) TableName() string {
+	return "group_join_requests"
+}
+
+const (
+	GroupJoinRequestPending  = "pending"
+	GroupJoinRequestAccepted = "accepted"
+	GroupJoinRequestRejected = "rejected"
+)
