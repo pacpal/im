@@ -1,0 +1,34 @@
+server:
+  name: gateway
+  http_port: 8080
+  grpc_port: 0
+
+etcd:
+  endpoints:
+    - localhost:2379
+  dial_timeout: 5s
+
+services:
+  user:
+    name: user-service
+    grpc_port: 50051
+  group:
+    name: group-service
+    grpc_port: 50052
+  message:
+    name: message-service
+    grpc_port: 50053
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: your-secret-key
+  expire: 24h
+
+log:
+  level: info
+  format: json

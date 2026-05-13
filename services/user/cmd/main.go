@@ -1,0 +1,117 @@
+package main
+
+import (
+	"IM/api/gen/user"
+	"IM/pkg/auth"
+	"IM/pkg/config"
+	"IM/pkg/discovery"
+	"IM/pkg/id"
+	"IM/pkg/interceptor"
+	"IM/services/user/application/service"
+	"IM/services/user/domain/event"
+	"IM/services/user/infrastructure/cache"
+	"IM/services/user/infrastructure/persistence"
+	grpcserver "IM/services/user/interfaces/grpc"
+	"context"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+)
+
+func main() {
+	cfg, err := config.Load(getConfigPath())
+	if err != nil {
+		log.Printf("Using default config: %v", err)
+		cfg = config.DefaultUserConfig()
+	}
+
+	registry, err := discovery.NewRegistry(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
+	if err != nil {
+		log.Fatalf("Failed to create registry: %v", err)
+	}
+	defer registry.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	serviceAddr := cfg.Server.Host + ":" + cfg.Server.GRPCPort
+	if err := registry.Register(ctx, cfg.Server.Name, serviceAddr, cfg.Etcd.TTL); err != nil {
+		log.Fatalf("Failed to register service: %v", err)
+	}
+	log.Printf("Service %s registered at %s", cfg.Server.Name, serviceAddr)
+
+	db, err := persistence.NewPostgresDB(cfg.Database)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     cfg.Redis.Host + ":" + cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+	defer redisClient.Close()
+
+	idGenerator := id.NewSnowflakeGenerator(1)
+	jwtUtil := auth.NewJWTUtil(cfg.JWT.Secret, cfg.JWT.Expire)
+
+	userRepo := persistence.NewUserRepository(db.GetDB())
+	friendshipRepo := persistence.NewFriendshipRepository(db.GetDB())
+	friendRequestRepo := persistence.NewFriendRequestRepository(db.GetDB())
+	userCache := cache.NewUserCache(redisClient)
+
+	eventPublisher := event.NewEventPublisher()
+	userService := service.NewUserService(userRepo, friendshipRepo, friendRequestRepo, userCache, idGenerator, jwtUtil, eventPublisher)
+
+	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(interceptor.StreamServerInterceptor()),
+	)
+
+	userServer := grpcserver.NewUserServer(userService)
+	user.RegisterUserServiceServer(grpcServer, userServer)
+
+	healthServer := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus(cfg.Server.Name, healthpb.HealthCheckResponse_SERVING)
+
+	go func() {
+		log.Printf("gRPC server starting on :%s", cfg.Server.GRPCPort)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+	grpcServer.GracefulStop()
+
+	if err := registry.Deregister(ctx, cfg.Server.Name, serviceAddr); err != nil {
+		log.Printf("Failed to deregister service: %v", err)
+	}
+
+	log.Println("Server stopped")
+}
+
+func getConfigPath() string {
+	if path := os.Getenv("CONFIG_PATH"); path != "" {
+		return path
+	}
+	return "configs/user.yaml"
+}

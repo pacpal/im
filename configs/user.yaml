@@ -1,0 +1,35 @@
+server:
+  name: user-service
+  http_port: 8081
+  grpc_port: 50051
+
+etcd:
+  endpoints:
+    - localhost:2379
+  dial_timeout: 5s
+  ttl: 30
+
+database:
+  type: postgres
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  dbname: im_db
+  sslmode: disable
+  max_open: 100
+  max_idle: 10
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: your-secret-key
+  expire: 24h
+
+log:
+  level: info
+  format: json
