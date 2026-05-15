@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "IM/api/gen/message;message";
+
+import "common/common.proto";
+
+service MessageService {
+    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+    rpc GetMessage(GetMessageRequest) returns (MessageInfo);
+    rpc GetOfflineMessages(GetOfflineMessagesRequest) returns (GetOfflineMessagesResponse);
+    rpc GetHistoryMessages(GetHistoryMessagesRequest) returns (GetHistoryMessagesResponse);
+    rpc MarkAsRead(MarkAsReadRequest) returns (common.Response);
+    rpc MarkAllAsRead(MarkAllAsReadRequest) returns (common.Response);
+    rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse);
+    rpc GetOnlineStatus(GetOnlineStatusRequest) returns (GetOnlineStatusResponse);
+    rpc RevokeMessage(RevokeMessageRequest) returns (common.Response);
+}
+
+message SendMessageRequest {
+    string sender_id = 1;
+    string receiver_id = 2;
+    string content = 3;
+    string msg_type = 4;
+    int64 timestamp = 5;
+}
+
+message SendMessageResponse {
+    string msg_id = 1;
+    bool success = 2;
+    int64 timestamp = 3;
+}
+
+message GetMessageRequest {
+    string msg_id = 1;
+}
+
+message MessageInfo {
+    string msg_id = 1;
+    string sender_id = 2;
+    string receiver_id = 3;
+    string content = 4;
+    string msg_type = 5;
+    int64 timestamp = 6;
+    bool is_read = 7;
+    bool is_revoked = 8;
+    int64 read_at = 9;
+}
+
+message GetOfflineMessagesRequest {
+    string user_id = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+}
+
+message GetOfflineMessagesResponse {
+    repeated MessageInfo messages = 1;
+    int32 total = 2;
+}
+
+message GetHistoryMessagesRequest {
+    string user_id = 1;
+    string target_id = 2;
+    bool is_group = 3;
+    int64 before_time = 4;
+    int32 limit = 5;
+}
+
+message GetHistoryMessagesResponse {
+    repeated MessageInfo messages = 1;
+    bool has_more = 2;
+}
+
+message MarkAsReadRequest {
+    string msg_id = 1;
+    string user_id = 2;
+}
+
+message MarkAllAsReadRequest {
+    string user_id = 1;
+    string target_id = 2;
+}
+
+message GetUnreadCountRequest {
+    string user_id = 1;
+}
+
+message GetUnreadCountResponse {
+    int64 count = 1;
+    map<string, int64> group_counts = 2;
+}
+
+message GetOnlineStatusRequest {
+    repeated string user_ids = 1;
+}
+
+message GetOnlineStatusResponse {
+    map<string, bool> online_status = 1;
+}
+
+message RevokeMessageRequest {
+    string msg_id = 1;
+    string user_id = 2;
+}
+
+message PushMessage {
+    string msg_id = 1;
+    string sender_id = 2;
+    string receiver_id = 3;
+    string content = 4;
+    string msg_type = 5;
+    int64 timestamp = 6;
+    bool is_group = 7;
+}

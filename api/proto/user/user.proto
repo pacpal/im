@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "IM/api/gen/user;user";
+
+import "common/common.proto";
+
+service UserService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc GetUser(GetUserRequest) returns (UserInfo);
+    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+    rpc UpdateUser(UpdateUserRequest) returns (common.Response);
+    rpc GetFriends(GetFriendsRequest) returns (GetFriendsResponse);
+    rpc AddFriend(AddFriendRequest) returns (common.Response);
+    rpc RemoveFriend(RemoveFriendRequest) returns (common.Response);
+    rpc ReplyFriendRequest(ReplyFriendRequest) returns (common.Response);
+    rpc CheckFriendship(CheckFriendshipRequest) returns (CheckFriendshipResponse);
+    rpc GetPendingFriendRequests(GetPendingFriendRequestsRequest) returns (GetPendingFriendRequestsResponse);
+}
+
+message RegisterRequest {
+    string tele = 1;
+    string name = 2;
+    string password = 3;
+}
+
+message RegisterResponse {
+    string user_id = 1;
+    string name = 2;
+}
+
+message LoginRequest {
+    string tele = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string user_id = 1;
+    string name = 2;
+    string token = 3;
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUsersRequest {
+    repeated string user_ids = 1;
+}
+
+message GetUsersResponse {
+    repeated UserInfo users = 1;
+}
+
+message UserInfo {
+    string id = 1;
+    string name = 2;
+    string tele = 3;
+    string avatar_url = 4;
+    int32 status = 5;
+    int64 created_at = 6;
+    int64 updated_at = 7;
+}
+
+message UpdateUserRequest {
+    string user_id = 1;
+    string name = 2;
+    string avatar_url = 3;
+}
+
+message GetFriendsRequest {
+    string user_id = 1;
+}
+
+message GetFriendsResponse {
+    repeated UserInfo friends = 1;
+}
+
+message AddFriendRequest {
+    string user_id = 1;
+    string target_id = 2;
+    string reason = 3;
+}
+
+message RemoveFriendRequest {
+    string user_id = 1;
+    string target_id = 2;
+}
+
+message ReplyFriendRequest {
+    string user_id = 1;
+    string request_id = 2;
+    bool accept = 3;
+}
+
+message CheckFriendshipRequest {
+    string user_id1 = 1;
+    string user_id2 = 2;
+}
+
+message CheckFriendshipResponse {
+    bool is_friend = 1;
+}
+
+message GetPendingFriendRequestsRequest {
+    string user_id = 1;
+}
+
+message FriendRequestInfo {
+    string id = 1;
+    string from_uid = 2;
+    string to_uid = 3;
+    string reason = 4;
+    string status = 5;
+    int64 created_at = 6;
+    UserInfo from_user = 7;
+}
+
+message GetPendingFriendRequestsResponse {
+    repeated FriendRequestInfo requests = 1;
+}
