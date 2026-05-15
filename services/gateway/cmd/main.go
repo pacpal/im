@@ -84,7 +84,6 @@ func main() {
 			protected.DELETE("/groups/:id/leave", handler.LeaveGroup(serviceProxy))
 
 			protected.POST("/messages", handler.SendMessage(serviceProxy))
-			protected.GET("/messages/:id", handler.GetMessage(serviceProxy))
 			protected.GET("/messages/offline", handler.GetOfflineMessages(serviceProxy))
 			protected.PUT("/messages/:id/read", handler.MarkAsRead(serviceProxy))
 			protected.PUT("/messages/read/all", handler.MarkAllAsRead(serviceProxy))

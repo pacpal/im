@@ -6,6 +6,7 @@ import (
 	"IM/services/user/domain/entity"
 	"IM/services/user/domain/event"
 	"IM/services/user/domain/repository"
+	"IM/services/user/infrastructure/cache"
 	"context"
 	"errors"
 	"time"
@@ -14,52 +15,44 @@ import (
 )
 
 var (
-	ErrUserNotFound       = errors.New("user not found")
-	ErrUserAlreadyExists  = errors.New("user already exists")
-	ErrInvalidPassword    = errors.New("invalid password")
-	ErrAlreadyFriends     = errors.New("already friends")
-	ErrNotFriends         = errors.New("not friends")
-	ErrRequestNotFound    = errors.New("request not found")
-	ErrRequestExists      = errors.New("request already exists")
-	ErrCannotAddSelf      = errors.New("cannot add yourself as friend")
-	ErrInvalidRequest     = errors.New("invalid request")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrInvalidPassword   = errors.New("invalid password")
+	ErrAlreadyFriends    = errors.New("already friends")
+	ErrNotFriends        = errors.New("not friends")
+	ErrRequestNotFound   = errors.New("request not found")
+	ErrRequestExists     = errors.New("request already exists")
+	ErrCannotAddSelf     = errors.New("cannot add yourself as friend")
+	ErrInvalidRequest    = errors.New("invalid request")
 )
 
 type UserService struct {
-	userRepo         repository.UserRepository
-	friendshipRepo   repository.FriendshipRepository
+	userRepo          repository.UserRepository
+	friendshipRepo    repository.FriendshipRepository
 	friendRequestRepo repository.FriendRequestRepository
-	userCache        *UserCache
-	idGenerator      *id.SnowflakeGenerator
-	jwtUtil          *auth.JWTUtil
-	eventPublisher   *event.EventPublisher
-}
-
-type UserCache struct {
-	getUserFunc func(ctx context.Context, userID string) (*entity.User, error)
-}
-
-func NewUserCache(getUserFunc func(ctx context.Context, userID string) (*entity.User, error)) *UserCache {
-	return &UserCache{getUserFunc: getUserFunc}
+	userCache         *cache.UserCache
+	idGenerator       *id.SnowflakeGenerator
+	jwtUtil           *auth.JWTUtil
+	eventPublisher    *event.EventPublisher
 }
 
 func NewUserService(
 	userRepo repository.UserRepository,
 	friendshipRepo repository.FriendshipRepository,
 	friendRequestRepo repository.FriendRequestRepository,
-	userCache *UserCache,
+	userCache *cache.UserCache,
 	idGenerator *id.SnowflakeGenerator,
 	jwtUtil *auth.JWTUtil,
 	eventPublisher *event.EventPublisher,
 ) *UserService {
 	return &UserService{
-		userRepo:         userRepo,
-		friendshipRepo:   friendshipRepo,
+		userRepo:          userRepo,
+		friendshipRepo:    friendshipRepo,
 		friendRequestRepo: friendRequestRepo,
-		userCache:        userCache,
-		idGenerator:      idGenerator,
-		jwtUtil:          jwtUtil,
-		eventPublisher:   eventPublisher,
+		userCache:         userCache,
+		idGenerator:       idGenerator,
+		jwtUtil:           jwtUtil,
+		eventPublisher:    eventPublisher,
 	}
 }
 
@@ -86,9 +79,9 @@ func (s *UserService) Register(ctx context.Context, tele, name, password string)
 
 	s.eventPublisher.Publish(&event.UserRegisteredEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "user.registered",
-			occurredAt:  time.Now(),
-			aggregateID: user.ID,
+			EventType:   "user.registered",
+			OccurredAt:  time.Now(),
+			AggregateID: user.ID,
 		},
 		UserID: user.ID,
 		Name:   user.Name,
@@ -108,16 +101,16 @@ func (s *UserService) Login(ctx context.Context, tele, password string) (*entity
 		return nil, "", ErrInvalidPassword
 	}
 
-	token, err := s.jwtUtil.GenerateToken(user.ID)
+	token, err := s.jwtUtil.GenerateToken(user.ID, user.Name)
 	if err != nil {
 		return nil, "", err
 	}
 
 	s.eventPublisher.Publish(&event.UserLoggedInEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "user.logged_in",
-			occurredAt:  time.Now(),
-			aggregateID: user.ID,
+			EventType:   "user.logged_in",
+			OccurredAt:  time.Now(),
+			AggregateID: user.ID,
 		},
 		UserID: user.ID,
 		Tele:   user.Tele,
@@ -190,9 +183,9 @@ func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason stri
 
 	s.eventPublisher.Publish(&event.FriendRequestCreatedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "friend_request.created",
-			occurredAt:  time.Now(),
-			aggregateID: requestID,
+			EventType:   "friend_request.created",
+			OccurredAt:  time.Now(),
+			AggregateID: requestID,
 		},
 		RequestID: requestID,
 		FromUID:   fromUID,
@@ -233,9 +226,9 @@ func (s *UserService) AcceptFriendRequest(ctx context.Context, requestID, accept
 
 	s.eventPublisher.Publish(&event.FriendRequestAcceptedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "friend_request.accepted",
-			occurredAt:  time.Now(),
-			aggregateID: requestID,
+			EventType:   "friend_request.accepted",
+			OccurredAt:  time.Now(),
+			AggregateID: requestID,
 		},
 		RequestID: requestID,
 		FromUID:   req.FromUID,
@@ -266,9 +259,9 @@ func (s *UserService) RejectFriendRequest(ctx context.Context, requestID, reject
 
 	s.eventPublisher.Publish(&event.FriendRequestRejectedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "friend_request.rejected",
-			occurredAt:  time.Now(),
-			aggregateID: requestID,
+			EventType:   "friend_request.rejected",
+			OccurredAt:  time.Now(),
+			AggregateID: requestID,
 		},
 		RequestID: requestID,
 		FromUID:   req.FromUID,
@@ -292,9 +285,9 @@ func (s *UserService) RemoveFriend(ctx context.Context, userID, friendID string)
 
 	s.eventPublisher.Publish(&event.FriendshipDeletedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "friendship.deleted",
-			occurredAt:  time.Now(),
-			aggregateID: userID,
+			EventType:   "friendship.deleted",
+			OccurredAt:  time.Now(),
+			AggregateID: userID,
 		},
 		UserID:   userID,
 		FriendID: friendID,

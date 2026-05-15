@@ -24,9 +24,9 @@ type ServerConfig struct {
 }
 
 type EtcdConfig struct {
-	Endpoints    []string      `yaml:"endpoints"`
-	DialTimeout  time.Duration `yaml:"dial_timeout"`
-	TTL          int64         `yaml:"ttl"`
+	Endpoints   []string      `yaml:"endpoints"`
+	DialTimeout time.Duration `yaml:"dial_timeout"`
+	TTL         int64         `yaml:"ttl"`
 }
 
 type DatabaseConfig struct {
@@ -59,12 +59,12 @@ type LogConfig struct {
 }
 
 type GatewayConfig struct {
-	Server   ServerConfig        `yaml:"server"`
-	Etcd     EtcdConfig          `yaml:"etcd"`
-	Services ServicesConfig      `yaml:"services"`
-	Redis    RedisConfig         `yaml:"redis"`
-	JWT      JWTConfig           `yaml:"jwt"`
-	Log      LogConfig           `yaml:"log"`
+	Server   ServerConfig   `yaml:"server"`
+	Etcd     EtcdConfig     `yaml:"etcd"`
+	Services ServicesConfig `yaml:"services"`
+	Redis    RedisConfig    `yaml:"redis"`
+	JWT      JWTConfig      `yaml:"jwt"`
+	Log      LogConfig      `yaml:"log"`
 }
 
 type ServicesConfig struct {
@@ -79,13 +79,14 @@ type ServiceEndpointConfig struct {
 }
 
 type MessageConfig struct {
-	Server    ServerConfig     `yaml:"server"`
-	Etcd      EtcdConfig       `yaml:"etcd"`
-	Database  MessageDBConfig  `yaml:"database"`
-	Redis     RedisConfig      `yaml:"redis"`
-	RabbitMQ  RabbitMQConfig   `yaml:"rabbitmq"`
-	WebSocket WebSocketConfig  `yaml:"websocket"`
-	Log       LogConfig        `yaml:"log"`
+	Server    ServerConfig    `yaml:"server"`
+	Etcd      EtcdConfig      `yaml:"etcd"`
+	Database  MessageDBConfig `yaml:"database"`
+	Redis     RedisConfig     `yaml:"redis"`
+	RabbitMQ  RabbitMQConfig  `yaml:"rabbitmq"`
+	WebSocket WebSocketConfig `yaml:"websocket"`
+	JWT       JWTConfig       `yaml:"jwt"`
+	Log       LogConfig       `yaml:"log"`
 }
 
 type MessageDBConfig struct {
@@ -100,9 +101,9 @@ type MongoDBConfig struct {
 }
 
 type RabbitMQConfig struct {
-	URL          string `yaml:"url"`
-	Exchange     string `yaml:"exchange"`
-	QueuePrefix  string `yaml:"queue_prefix"`
+	URL         string `yaml:"url"`
+	Exchange    string `yaml:"exchange"`
+	QueuePrefix string `yaml:"queue_prefix"`
 }
 
 type WebSocketConfig struct {
@@ -272,6 +273,10 @@ func DefaultMessageConfig() *MessageConfig {
 			PingPeriod:      30 * time.Second,
 			PongWait:        60 * time.Second,
 			MaxMessageSize:  65536,
+		},
+		JWT: JWTConfig{
+			Secret: "your-secret-key",
+			Expire: 24 * time.Hour,
 		},
 		Log: LogConfig{
 			Level:  "info",

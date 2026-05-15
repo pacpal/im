@@ -56,5 +56,9 @@ func (c *UserCache) Delete(ctx context.Context, userID string) error {
 
 func (c *UserCache) Exists(ctx context.Context, userID string) (bool, error) {
 	key := c.userKey(userID)
-	return c.client.Exists(ctx, key).Result()
+	count, err := c.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

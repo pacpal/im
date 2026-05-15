@@ -61,9 +61,9 @@ func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name, descripti
 
 	s.eventPublisher.Publish(&event.GroupCreatedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group.created",
-			occurredAt:  time.Now(),
-			aggregateID: groupID,
+			EventType:   "group.created",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
 		},
 		GroupID: groupID,
 		Name:    name,
@@ -98,9 +98,9 @@ func (s *GroupService) UpdateGroup(ctx context.Context, groupID, ownerID, name, 
 
 	s.eventPublisher.Publish(&event.GroupUpdatedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group.updated",
-			occurredAt:  time.Now(),
-			aggregateID: groupID,
+			EventType:   "group.updated",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
 		},
 		GroupID: groupID,
 		Name:    group.Name,
@@ -125,9 +125,9 @@ func (s *GroupService) DeleteGroup(ctx context.Context, groupID, ownerID string)
 
 	s.eventPublisher.Publish(&event.GroupDeletedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group.deleted",
-			occurredAt:  time.Now(),
-			aggregateID: groupID,
+			EventType:   "group.deleted",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
 		},
 		GroupID: groupID,
 		OwnerID: ownerID,
@@ -162,9 +162,9 @@ func (s *GroupService) JoinGroup(ctx context.Context, userID, groupID, reason st
 
 	s.eventPublisher.Publish(&event.JoinRequestCreatedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group_join_request.created",
-			occurredAt:  time.Now(),
-			aggregateID: requestID,
+			EventType:   "group_join_request.created",
+			OccurredAt:  time.Now(),
+			AggregateID: requestID,
 		},
 		RequestID: requestID,
 		UserID:    userID,
@@ -190,9 +190,9 @@ func (s *GroupService) LeaveGroup(ctx context.Context, userID, groupID string) e
 
 	s.eventPublisher.Publish(&event.MemberLeftEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group.member_left",
-			occurredAt:  time.Now(),
-			aggregateID: groupID,
+			EventType:   "group.member_left",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
 		},
 		GroupID: groupID,
 		UserID:  userID,
@@ -232,9 +232,9 @@ func (s *GroupService) AcceptJoinRequest(ctx context.Context, requestID, ownerID
 
 	s.eventPublisher.Publish(&event.JoinRequestAcceptedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group_join_request.accepted",
-			occurredAt:  time.Now(),
-			aggregateID: requestID,
+			EventType:   "group_join_request.accepted",
+			OccurredAt:  time.Now(),
+			AggregateID: requestID,
 		},
 		RequestID: requestID,
 		UserID:    request.UserID,
@@ -270,9 +270,9 @@ func (s *GroupService) RejectJoinRequest(ctx context.Context, requestID, ownerID
 
 	s.eventPublisher.Publish(&event.JoinRequestRejectedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group_join_request.rejected",
-			occurredAt:  time.Now(),
-			aggregateID: requestID,
+			EventType:   "group_join_request.rejected",
+			OccurredAt:  time.Now(),
+			AggregateID: requestID,
 		},
 		RequestID: requestID,
 		UserID:    request.UserID,
@@ -311,9 +311,9 @@ func (s *GroupService) RemoveMember(ctx context.Context, groupID, ownerID, membe
 
 	s.eventPublisher.Publish(&event.MemberRemovedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group.member_removed",
-			occurredAt:  time.Now(),
-			aggregateID: groupID,
+			EventType:   "group.member_removed",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
 		},
 		GroupID: groupID,
 		UserID:  memberID,
@@ -363,9 +363,9 @@ func (s *GroupService) TransferOwner(ctx context.Context, groupID, ownerID, newO
 
 	s.eventPublisher.Publish(&event.OwnerTransferredEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "group.owner_transferred",
-			occurredAt:  time.Now(),
-			aggregateID: groupID,
+			EventType:   "group.owner_transferred",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
 		},
 		GroupID:    groupID,
 		OldOwnerID: ownerID,

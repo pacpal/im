@@ -3,27 +3,27 @@ package event
 import "time"
 
 type Event interface {
-	EventType() string
-	OccurredAt() time.Time
-	AggregateID() string
+	GetEventType() string
+	GetOccurredAt() time.Time
+	GetAggregateID() string
 }
 
 type BaseEvent struct {
-	eventType   string
-	occurredAt  time.Time
-	aggregateID string
+	EventType   string
+	OccurredAt  time.Time
+	AggregateID string
 }
 
-func (e *BaseEvent) EventType() string {
-	return e.eventType
+func (e *BaseEvent) GetEventType() string {
+	return e.EventType
 }
 
-func (e *BaseEvent) OccurredAt() time.Time {
-	return e.occurredAt
+func (e *BaseEvent) GetOccurredAt() time.Time {
+	return e.OccurredAt
 }
 
-func (e *BaseEvent) AggregateID() string {
-	return e.aggregateID
+func (e *BaseEvent) GetAggregateID() string {
+	return e.AggregateID
 }
 
 type UserRegisteredEvent struct {
@@ -94,7 +94,7 @@ func (p *EventPublisher) Subscribe(eventType string, handler Handler) {
 }
 
 func (p *EventPublisher) Publish(event Event) {
-	handlers, ok := p.handlers[event.EventType()]
+	handlers, ok := p.handlers[event.GetEventType()]
 	if !ok {
 		return
 	}

@@ -4,12 +4,12 @@ import (
 	"github.com/bwmarrin/snowflake"
 )
 
-// Generator Snowflake ID 生成器
 type Generator struct {
 	node *snowflake.Node
 }
 
-// NewGenerator 创建 ID 生成器
+type SnowflakeGenerator = Generator
+
 func NewGenerator(nodeID int64) (*Generator, error) {
 	node, err := snowflake.NewNode(nodeID)
 	if err != nil {
@@ -18,7 +18,15 @@ func NewGenerator(nodeID int64) (*Generator, error) {
 	return &Generator{node: node}, nil
 }
 
-// NextID 生成下一个唯一 ID
+func NewSnowflakeGenerator(nodeID int64) *Generator {
+	node, _ := snowflake.NewNode(nodeID)
+	return &Generator{node: node}
+}
+
 func (g *Generator) NextID() string {
+	return g.node.Generate().String()
+}
+
+func (g *Generator) Generate() string {
 	return g.node.Generate().String()
 }

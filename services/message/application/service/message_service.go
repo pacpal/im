@@ -17,11 +17,11 @@ var (
 )
 
 type MessageService struct {
-	messageRepo    repository.MessageRepository
-	messageCache   repository.MessageCache
+	messageRepo     repository.MessageRepository
+	messageCache    repository.MessageCache
 	messageProducer MessageProducer
-	idGenerator    *id.SnowflakeGenerator
-	eventPublisher *event.EventPublisher
+	idGenerator     *id.SnowflakeGenerator
+	eventPublisher  *event.EventPublisher
 }
 
 type MessageProducer interface {
@@ -36,11 +36,11 @@ func NewMessageService(
 	eventPublisher *event.EventPublisher,
 ) *MessageService {
 	return &MessageService{
-		messageRepo:    messageRepo,
-		messageCache:   messageCache,
+		messageRepo:     messageRepo,
+		messageCache:    messageCache,
 		messageProducer: messageProducer,
-		idGenerator:    idGenerator,
-		eventPublisher: eventPublisher,
+		idGenerator:     idGenerator,
+		eventPublisher:  eventPublisher,
 	}
 }
 
@@ -60,9 +60,9 @@ func (s *MessageService) SendMessage(ctx context.Context, senderID, receiverID, 
 
 	s.eventPublisher.Publish(&event.MessageSentEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "message.sent",
-			occurredAt:  time.Now(),
-			aggregateID: messageID,
+			EventType:   "message.sent",
+			OccurredAt:  time.Now(),
+			AggregateID: messageID,
 		},
 		MessageID:  messageID,
 		SenderID:   senderID,
@@ -108,9 +108,9 @@ func (s *MessageService) MarkAsRead(ctx context.Context, messageID, userID strin
 
 	s.eventPublisher.Publish(&event.MessageReadEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "message.read",
-			occurredAt:  time.Now(),
-			aggregateID: messageID,
+			EventType:   "message.read",
+			OccurredAt:  time.Now(),
+			AggregateID: messageID,
 		},
 		MessageID: messageID,
 		UserID:    userID,
@@ -164,9 +164,9 @@ func (s *MessageService) RevokeMessage(ctx context.Context, messageID, userID st
 
 	s.eventPublisher.Publish(&event.MessageRevokedEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "message.revoked",
-			occurredAt:  time.Now(),
-			aggregateID: messageID,
+			EventType:   "message.revoked",
+			OccurredAt:  time.Now(),
+			AggregateID: messageID,
 		},
 		MessageID: messageID,
 		UserID:    userID,
@@ -182,9 +182,9 @@ func (s *MessageService) SetUserOnline(ctx context.Context, userID string) error
 
 	s.eventPublisher.Publish(&event.UserOnlineEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "user.online",
-			occurredAt:  time.Now(),
-			aggregateID: userID,
+			EventType:   "user.online",
+			OccurredAt:  time.Now(),
+			AggregateID: userID,
 		},
 		UserID: userID,
 	})
@@ -199,9 +199,9 @@ func (s *MessageService) SetUserOffline(ctx context.Context, userID string) erro
 
 	s.eventPublisher.Publish(&event.UserOfflineEvent{
 		BaseEvent: event.BaseEvent{
-			eventType:   "user.offline",
-			occurredAt:  time.Now(),
-			aggregateID: userID,
+			EventType:   "user.offline",
+			OccurredAt:  time.Now(),
+			AggregateID: userID,
 		},
 		UserID: userID,
 	})

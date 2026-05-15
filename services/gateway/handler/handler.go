@@ -106,11 +106,16 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 			return
 		}
 
+		reply := "reject"
+		if req.Accept {
+			reply = "accept"
+		}
+
 		userID, _ := c.Get("user_id")
-		resp, err := p.UserClient().ReplyFriendRequest(c.Request.Context(), &user.ReplyFriendRequest{
+		resp, err := p.UserClient().ReplyFriend(c.Request.Context(), &user.ReplyFriendRequest{
 			UserId:    userID.(string),
 			RequestId: req.RequestID,
-			Accept:    req.Accept,
+			Reply:     reply,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -221,19 +226,24 @@ func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
-			RequestID string `json:"request_id"`
-			Accept    bool   `json:"accept"`
+			GroupID string `json:"group_id"`
+			Accept  bool   `json:"accept"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
+		reply := "reject"
+		if req.Accept {
+			reply = "accept"
+		}
+
 		userID, _ := c.Get("user_id")
-		resp, err := p.GroupClient().ReplyGroupJoinRequest(c.Request.Context(), &group.ReplyGroupJoinRequest{
-			OwnerId:   userID.(string),
-			RequestId: req.RequestID,
-			Accept:    req.Accept,
+		resp, err := p.GroupClient().ReplyGroupJoin(c.Request.Context(), &group.ReplyGroupJoinRequest{
+			OwnerId: userID.(string),
+			GroupId: req.GroupID,
+			Reply:   reply,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -287,18 +297,6 @@ func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
-func GetMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		msgID := c.Param("id")
-		resp, err := p.MessageClient().GetMessage(c.Request.Context(), &message.GetMessageRequest{MsgId: msgID})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, resp)
-	}
-}
-
 func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
@@ -318,11 +316,9 @@ func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		msgID := c.Param("id")
-		userID, _ := c.Get("user_id")
 
 		resp, err := p.MessageClient().MarkAsRead(c.Request.Context(), &message.MarkAsReadRequest{
-			MsgId:  msgID,
-			UserId: userID.(string),
+			MsgId: msgID,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -334,18 +330,9 @@ func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			TargetID string `json:"target_id"`
-		}
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
 		userID, _ := c.Get("user_id")
 		resp, err := p.MessageClient().MarkAllAsRead(c.Request.Context(), &message.MarkAllAsReadRequest{
-			UserId:   userID.(string),
-			TargetId: req.TargetID,
+			UserId: userID.(string),
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
