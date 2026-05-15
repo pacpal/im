@@ -1,3 +1,4 @@
+// Package userservice 提供用户相关的业务逻辑服务，包括用户注册、登录、好友管理等功能。
 package userservice
 
 import (

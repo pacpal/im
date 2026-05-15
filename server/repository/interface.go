@@ -1,3 +1,4 @@
+// Package repo 定义了数据访问层的接口，包括用户、好友关系、群组、消息等实体的存储操作。
 package repo
 
 import (
