@@ -26,7 +26,7 @@ redis:
   db: 0
 
 jwt:
-  secret: your-secret-key
+  secret: zxcvbnm123
   expire: 24h
 
 log:
