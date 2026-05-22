@@ -6,21 +6,6 @@ option go_package = "IM/api/gen/group;group";
 
 import "common/common.proto";
 
-service GroupService {
-    rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
-    rpc GetGroup(GetGroupRequest) returns (GroupInfo);
-    rpc UpdateGroup(UpdateGroupRequest) returns (common.Response);
-    rpc DeleteGroup(DeleteGroupRequest) returns (common.Response);
-    rpc JoinGroup(JoinGroupRequest) returns (common.Response);
-    rpc LeaveGroup(LeaveGroupRequest) returns (common.Response);
-    rpc ReplyGroupJoinRequest(ReplyGroupJoinRequest) returns (common.Response);
-    rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
-    rpc RemoveMember(RemoveMemberRequest) returns (common.Response);
-    rpc GetUserGroups(GetUserGroupsRequest) returns (GetUserGroupsResponse);
-    rpc GetPendingGroupRequests(GetPendingGroupRequestsRequest) returns (GetPendingGroupRequestsResponse);
-    rpc TransferOwner(TransferOwnerRequest) returns (common.Response);
-}
-
 message CreateGroupRequest {
     string owner_id = 1;
     string name = 2;
@@ -135,3 +120,18 @@ message TransferOwnerRequest {
     string owner_id = 2;
     string new_owner_id = 3;
 }
+service GroupService {
+    rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
+    rpc GetGroup(GetGroupRequest) returns (GroupInfo);
+    rpc UpdateGroup(UpdateGroupRequest) returns (common.Response);
+    rpc DeleteGroup(DeleteGroupRequest) returns (common.Response);
+    rpc JoinGroup(JoinGroupRequest) returns (common.Response);
+    rpc LeaveGroup(LeaveGroupRequest) returns (common.Response);
+    rpc ReplyGroupJoins(ReplyGroupJoinRequest) returns (common.Response);
+    rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
+    rpc RemoveMember(RemoveMemberRequest) returns (common.Response);
+    rpc GetUserGroups(GetUserGroupsRequest) returns (GetUserGroupsResponse);
+    rpc GetPendingGroupRequests(GetPendingGroupRequestsRequest) returns (GetPendingGroupRequestsResponse);
+    rpc TransferOwner(TransferOwnerRequest) returns (common.Response);
+}
+

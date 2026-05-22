@@ -15,7 +15,7 @@ service UserService {
     rpc GetFriends(GetFriendsRequest) returns (GetFriendsResponse);
     rpc AddFriend(AddFriendRequest) returns (common.Response);
     rpc RemoveFriend(RemoveFriendRequest) returns (common.Response);
-    rpc ReplyFriendRequest(ReplyFriendRequest) returns (common.Response);
+    rpc ReplyFriend(ReplyFriendRequest) returns (common.Response);
     rpc CheckFriendship(CheckFriendshipRequest) returns (CheckFriendshipResponse);
     rpc GetPendingFriendRequests(GetPendingFriendRequestsRequest) returns (GetPendingFriendRequestsResponse);
 }

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"IM/api/gen/group"
+	common "IM/api/gen/common"
 	"IM/services/group/application/service"
 	"context"
 )
@@ -46,52 +47,52 @@ func (s *GroupServer) GetGroup(ctx context.Context, req *group.GetGroupRequest) 
 	}, nil
 }
 
-func (s *GroupServer) JoinGroup(ctx context.Context, req *group.JoinGroupRequest) (*group.CommonResponse, error) {
+func (s *GroupServer) JoinGroup(ctx context.Context, req *group.JoinGroupRequest) (*common.Response, error) {
 	err := s.groupSvc.JoinGroup(ctx, req.UserId, req.GroupId, req.Reason)
 	if err != nil {
-		return &group.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &group.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "join request sent",
 	}, nil
 }
 
-func (s *GroupServer) LeaveGroup(ctx context.Context, req *group.LeaveGroupRequest) (*group.CommonResponse, error) {
+func (s *GroupServer) LeaveGroup(ctx context.Context, req *group.LeaveGroupRequest) (*common.Response, error) {
 	err := s.groupSvc.LeaveGroup(ctx, req.UserId, req.GroupId)
 	if err != nil {
-		return &group.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &group.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "left group",
 	}, nil
 }
 
-func (s *GroupServer) ReplyGroupJoinRequest(ctx context.Context, req *group.ReplyGroupJoinRequest) (*group.CommonResponse, error) {
+func (s *GroupServer) ReplyGroupJoin(ctx context.Context, req *group.ReplyGroupJoinRequest) (*common.Response, error) {
 	var err error
-	if req.Reply == "accept" {
-		err = s.groupSvc.AcceptJoinRequest(ctx, req.GroupId, req.OwnerId)
+	if req.GetAccept() {
+		err = s.groupSvc.AcceptJoinRequest(ctx, req.GetRequestId(), req.GetOwnerId())
 	} else {
-		err = s.groupSvc.RejectJoinRequest(ctx, req.GroupId, req.OwnerId)
+		err = s.groupSvc.RejectJoinRequest(ctx, req.GetRequestId(), req.GetOwnerId())
 	}
 
 	if err != nil {
-		return &group.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &group.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "request processed",
 	}, nil
@@ -117,16 +118,16 @@ func (s *GroupServer) GetMembers(ctx context.Context, req *group.GetMembersReque
 	}, nil
 }
 
-func (s *GroupServer) RemoveMember(ctx context.Context, req *group.RemoveMemberRequest) (*group.CommonResponse, error) {
+func (s *GroupServer) RemoveMember(ctx context.Context, req *group.RemoveMemberRequest) (*common.Response, error) {
 	err := s.groupSvc.RemoveMember(ctx, req.GroupId, req.OwnerId, req.MemberId)
 	if err != nil {
-		return &group.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &group.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "member removed",
 	}, nil

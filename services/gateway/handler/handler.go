@@ -106,16 +106,11 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 			return
 		}
 
-		reply := "reject"
-		if req.Accept {
-			reply = "accept"
-		}
-
 		userID, _ := c.Get("user_id")
 		resp, err := p.UserClient().ReplyFriend(c.Request.Context(), &user.ReplyFriendRequest{
 			UserId:    userID.(string),
 			RequestId: req.RequestID,
-			Reply:     reply,
+			Accept:    req.Accept,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -233,17 +228,11 @@ func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
-		reply := "reject"
-		if req.Accept {
-			reply = "accept"
-		}
-
 		userID, _ := c.Get("user_id")
 		resp, err := p.GroupClient().ReplyGroupJoin(c.Request.Context(), &group.ReplyGroupJoinRequest{
-			OwnerId: userID.(string),
-			GroupId: req.GroupID,
-			Reply:   reply,
+			OwnerId:   userID.(string),
+			RequestId: req.GroupID,
+			Accept:    req.Accept,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

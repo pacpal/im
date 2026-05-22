@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"IM/api/gen/common"
 	"IM/api/gen/user"
 	"IM/services/user/application/service"
 	"context"
@@ -80,52 +81,52 @@ func (s *UserServer) GetFriends(ctx context.Context, req *user.GetFriendsRequest
 	}, nil
 }
 
-func (s *UserServer) AddFriend(ctx context.Context, req *user.AddFriendRequest) (*user.CommonResponse, error) {
+func (s *UserServer) AddFriend(ctx context.Context, req *user.AddFriendRequest) (*common.Response, error) {
 	err := s.userSvc.AddFriend(ctx, req.UserId, req.TargetId, req.Reason)
 	if err != nil {
-		return &user.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &user.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "friend request sent",
 	}, nil
 }
 
-func (s *UserServer) RemoveFriend(ctx context.Context, req *user.RemoveFriendRequest) (*user.CommonResponse, error) {
+func (s *UserServer) RemoveFriend(ctx context.Context, req *user.RemoveFriendRequest) (*common.Response, error) {
 	err := s.userSvc.RemoveFriend(ctx, req.UserId, req.TargetId)
 	if err != nil {
-		return &user.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &user.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "friend removed",
 	}, nil
 }
 
-func (s *UserServer) ReplyFriendRequest(ctx context.Context, req *user.ReplyFriendRequest) (*user.CommonResponse, error) {
+func (s *UserServer) ReplyFriendRequest(ctx context.Context, req *user.ReplyFriendRequest) (*common.Response, error) {
 	var err error
-	if req.Reply == "accept" {
+	if req.GetAccept() {
 		err = s.userSvc.AcceptFriendRequest(ctx, req.RequestId, req.UserId)
 	} else {
 		err = s.userSvc.RejectFriendRequest(ctx, req.RequestId, req.UserId)
 	}
 
 	if err != nil {
-		return &user.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &user.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "friend request processed",
 	}, nil

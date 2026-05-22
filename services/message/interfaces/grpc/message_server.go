@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"IM/api/gen/common"
 	"IM/api/gen/message"
 	"IM/services/message/application/service"
 	"IM/services/message/domain/entity"
@@ -46,31 +47,31 @@ func (s *MessageServer) GetOfflineMessages(ctx context.Context, req *message.Get
 	}, nil
 }
 
-func (s *MessageServer) MarkAsRead(ctx context.Context, req *message.MarkAsReadRequest) (*message.CommonResponse, error) {
+func (s *MessageServer) MarkAsRead(ctx context.Context, req *message.MarkAsReadRequest) (*common.Response, error) {
 	err := s.messageSvc.MarkAsRead(ctx, req.MsgId, "")
 	if err != nil {
-		return &message.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &message.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "marked as read",
 	}, nil
 }
 
-func (s *MessageServer) MarkAllAsRead(ctx context.Context, req *message.MarkAllAsReadRequest) (*message.CommonResponse, error) {
+func (s *MessageServer) MarkAllAsRead(ctx context.Context, req *message.MarkAllAsReadRequest) (*common.Response, error) {
 	err := s.messageSvc.MarkAllAsRead(ctx, req.UserId, "")
 	if err != nil {
-		return &message.CommonResponse{
+		return &common.Response{
 			Success: false,
 			Message: err.Error(),
 		}, nil
 	}
 
-	return &message.CommonResponse{
+	return &common.Response{
 		Success: true,
 		Message: "all messages marked as read",
 	}, nil
@@ -88,18 +89,13 @@ func (s *MessageServer) GetUnreadCount(ctx context.Context, req *message.GetUnre
 }
 
 func (s *MessageServer) GetOnlineStatus(ctx context.Context, req *message.GetOnlineStatusRequest) (*message.GetOnlineStatusResponse, error) {
-	status, err := s.messageSvc.GetOnlineStatus(ctx, []string{req.UserId})
+	statusMap, err := s.messageSvc.GetOnlineStatus(ctx, req.GetUserIds())
 	if err != nil {
 		return nil, err
 	}
 
-	var onlineUserIds []string
-	if status[req.UserId] {
-		onlineUserIds = []string{req.UserId}
-	}
-
 	return &message.GetOnlineStatusResponse{
-		OnlineUserIds: onlineUserIds,
+		OnlineStatus: statusMap,
 	}, nil
 }
 
