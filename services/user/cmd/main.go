@@ -1,3 +1,4 @@
+// Package main 是 user 服务的入口，负责初始化依赖、注册到 etcd 并启动 gRPC 服务。
 package main
 
 import (
@@ -117,6 +118,7 @@ func main() {
 	logger.Info("Server stopped")
 }
 
+// getConfigPath 返回 user 服务的配置文件路径，优先使用环境变量 CONFIG_PATH。
 func getConfigPath() string {
 	if path := os.Getenv("CONFIG_PATH"); path != "" {
 		return path

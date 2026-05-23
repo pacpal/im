@@ -1,7 +1,9 @@
+// Package model 定义数据库表对应的 GORM 模型结构体。
 package model
 
 import "time"
 
+// User 是 users 表的 GORM 映射模型。
 type User struct {
 	ID        string    `gorm:"primaryKey;size:64"`
 	Name      string    `gorm:"size:100;not null;index"`

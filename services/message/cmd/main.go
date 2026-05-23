@@ -1,3 +1,4 @@
+// Package main 是 message 服务的入口，负责初始化 MongoDB、RabbitMQ、注册到 etcd 并启动 gRPC 服务。
 package main
 
 import (
@@ -120,6 +121,7 @@ func main() {
 	logger.Info("Server stopped")
 }
 
+// getConfigPath 返回 message 服务使用的配置文件路径。
 func getConfigPath() string {
 	if path := os.Getenv("CONFIG_PATH"); path != "" {
 		return path

@@ -1,3 +1,4 @@
+// Package middleware 提供 HTTP 层的 Gin 中间件：认证、CORS、日志与恢复等。
 package middleware
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Auth 返回一个 Gin 中间件，用于解析 Authorization header 并验证 JWT，验证通过后将 user_id 注入到上下文中。
 func Auth(jwtUtil *auth.JWTUtil) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -42,6 +44,7 @@ func Auth(jwtUtil *auth.JWTUtil) gin.HandlerFunc {
 	}
 }
 
+// CORS 返回一个允许跨域请求的中间件（仅用于简易开发场景）。
 func CORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
@@ -57,6 +60,7 @@ func CORS() gin.HandlerFunc {
 	}
 }
 
+// Logging 返回一个记录 HTTP 请求与响应状态的中间件。
 func Logging() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
@@ -73,6 +77,7 @@ func Logging() gin.HandlerFunc {
 	}
 }
 
+// Recovery 返回一个 panic 恢复中间件，捕获 panic 并返回 500。
 func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {

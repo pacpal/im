@@ -25,6 +25,8 @@ const (
 type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Tele          string                 `protobuf:"bytes,1,opt,name=tele,proto3" json:"tele,omitempty"`
+	Id            string                 `protobuf:"bytes,4,opt,name=id,proto3" json:"id,omitempty"`
+	Email         string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -64,6 +66,20 @@ func (*RegisterRequest) Descriptor() ([]byte, []int) {
 func (x *RegisterRequest) GetTele() string {
 	if x != nil {
 		return x.Tele
+	}
+	return ""
+}
+
+func (x *RegisterRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *RegisterRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
 	}
 	return ""
 }
@@ -138,6 +154,8 @@ type LoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Tele          string                 `protobuf:"bytes,1,opt,name=tele,proto3" json:"tele,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Id            string                 `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -182,6 +200,20 @@ func (x *LoginRequest) GetTele() string {
 func (x *LoginRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
+	}
+	return ""
+}
+
+func (x *LoginRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LoginRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
 	}
 	return ""
 }
@@ -1070,17 +1102,21 @@ var File_user_user_proto protoreflect.FileDescriptor
 
 const file_user_user_proto_rawDesc = "" +
 	"\n" +
-	"\x0fuser/user.proto\x12\x04user\x1a\x13common/common.proto\"U\n" +
+	"\x0fuser/user.proto\x12\x04user\x1a\x13common/common.proto\"{\n" +
 	"\x0fRegisterRequest\x12\x12\n" +
-	"\x04tele\x18\x01 \x01(\tR\x04tele\x12\x12\n" +
+	"\x04tele\x18\x01 \x01(\tR\x04tele\x12\x0e\n" +
+	"\x02id\x18\x04 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\"?\n" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\">\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"d\n" +
 	"\fLoginRequest\x12\x12\n" +
 	"\x04tele\x18\x01 \x01(\tR\x04tele\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"R\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\"R\n" +
 	"\rLoginResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +

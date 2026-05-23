@@ -1,3 +1,4 @@
+// Package logger 提供项目内的轻量日志封装，基于 zap 实现简易的全局日志函数。
 package logger
 
 import (
@@ -10,6 +11,7 @@ import (
 var sugar *zap.SugaredLogger
 
 // Init 初始化全局 logger，level: debug/info/warn/error，format: json/console
+// level 控制日志级别，format 支持 "json" 或 "console"。
 func Init(level string, format string) error {
 	var cfg zap.Config
 	if strings.ToLower(format) == "console" {
@@ -37,7 +39,7 @@ func Init(level string, format string) error {
 	return nil
 }
 
-// Sync flushes any buffered logs
+// Sync 刷新并关闭底层日志缓冲（需要在程序退出时调用）。
 func Sync() {
 	if sugar != nil {
 		_ = sugar.Sync()
@@ -125,6 +127,7 @@ func Fatal(args ...interface{}) {
 }
 
 // With returns a sugared logger with added context fields
+// With 返回一个带有附加上下文字段的 SugaredLogger，方便链式调用。
 func With(args ...interface{}) *zap.SugaredLogger {
 	if sugar != nil {
 		return sugar.With(args...)

@@ -1,3 +1,4 @@
+// Package discovery 提供基于 etcd 的服务注册（Registry）与服务发现（Resolver）功能。
 package discovery
 
 import (
@@ -8,7 +9,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-// Registry 管理服务注册
+// Registry 管理服务注册与租约续约流程。
 type Registry struct {
 	client     *clientv3.Client
 	leaseID    clientv3.LeaseID

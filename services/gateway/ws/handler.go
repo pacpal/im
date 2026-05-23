@@ -1,3 +1,4 @@
+// Package ws 提供 WebSocket 处理器，用于升级连接并将客户端注册到 Hub。
 package ws
 
 import (
@@ -19,12 +20,14 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// Handler 负责处理 WebSocket 协议升级、认证与 Client 的注册。
 type Handler struct {
 	hub     *Hub
 	jwtUtil *auth.JWTUtil
 	redis   *redis.Client
 }
 
+// NewHandler 创建一个 Handler 实例。
 func NewHandler(hub *Hub, jwtUtil *auth.JWTUtil, redis *redis.Client) *Handler {
 	return &Handler{
 		hub:     hub,
@@ -33,6 +36,7 @@ func NewHandler(hub *Hub, jwtUtil *auth.JWTUtil, redis *redis.Client) *Handler {
 	}
 }
 
+// HandleWebSocket 处理来自 HTTP 的 WebSocket 升级请求并注册客户端到 Hub。
 func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	if token == "" {
@@ -65,6 +69,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	go client.readPump()
 }
 
+// readPump 从 WebSocket 连接读取消息并在断开时注销客户端。
 func (c *Client) readPump() {
 	defer func() {
 		c.hub.UnregisterClient(c)
@@ -88,6 +93,7 @@ func (c *Client) readPump() {
 	}
 }
 
+// writePump 负责按心跳向客户端发送 Ping，并将 Hub 广播的消息写入连接。
 func (c *Client) writePump() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer func() {
@@ -132,6 +138,7 @@ func (c *Client) writePump() {
 	}
 }
 
+// WebSocketHandler 返回一个 Gin 处理器，用于将请求交由 Handler 处理 WebSocket 连接。
 func WebSocketHandler(h *Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h.HandleWebSocket(c.Writer, c.Request)

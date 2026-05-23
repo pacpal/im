@@ -1,3 +1,4 @@
+// Package persistence 提供基于 GORM 的 group 服务持久化实现。
 package persistence
 
 import (
@@ -11,10 +12,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// GroupRepository 是 GroupRepository 接口的 GORM 实现。
 type GroupRepository struct {
 	db *gorm.DB
 }
 
+// NewGroupRepository 创建 GroupRepository 实例。
 func NewGroupRepository(db *gorm.DB) repository.GroupRepository {
 	return &GroupRepository{db: db}
 }
@@ -80,10 +83,12 @@ func (r *GroupRepository) GetByUserID(ctx context.Context, userID string) ([]*en
 	return groups, nil
 }
 
+// GroupMemberRepository 是群成员相关的持久化实现。
 type GroupMemberRepository struct {
 	db *gorm.DB
 }
 
+// NewGroupMemberRepository 创建 GroupMemberRepository。
 func NewGroupMemberRepository(db *gorm.DB) repository.GroupMemberRepository {
 	return &GroupMemberRepository{db: db}
 }
@@ -159,10 +164,12 @@ func (r *GroupMemberRepository) UpdateRole(ctx context.Context, groupID, userID 
 		Update("role", int(role)).Error
 }
 
+// GroupJoinRequestRepository 提供群组加入请求的持久化实现。
 type GroupJoinRequestRepository struct {
 	db *gorm.DB
 }
 
+// NewGroupJoinRequestRepository 创建 GroupJoinRequestRepository。
 func NewGroupJoinRequestRepository(db *gorm.DB) repository.GroupJoinRequestRepository {
 	return &GroupJoinRequestRepository{db: db}
 }

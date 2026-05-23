@@ -1,7 +1,9 @@
+// Package model 定义 group 服务使用的 GORM 模型结构体。
 package model
 
 import "time"
 
+// Group 为 groups 表的映射模型。
 type Group struct {
 	ID          string    `gorm:"primaryKey;size:64"`
 	Name        string    `gorm:"size:100;not null;index"`

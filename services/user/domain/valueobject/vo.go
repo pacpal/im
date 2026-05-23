@@ -1,3 +1,4 @@
+// Package valueobject 定义用户领域中的值对象（UserID、PhoneNumber、Password、UserName、AvatarURL）。
 package valueobject
 
 import (
@@ -5,6 +6,7 @@ import (
 	"strings"
 )
 
+// UserID 值对象，封装用户 ID 的基本校验。
 type UserID struct {
 	value string
 }
@@ -21,6 +23,7 @@ func (id UserID) IsValid() bool {
 	return id.value != "" && strings.HasPrefix(id.value, "user_")
 }
 
+// PhoneNumber 值对象，包含手机号的格式校验。
 type PhoneNumber struct {
 	value string
 }
@@ -39,6 +42,7 @@ func (pn PhoneNumber) IsValid() bool {
 	return phoneRegex.MatchString(pn.value)
 }
 
+// Password 值对象，仅封装哈希值。
 type Password struct {
 	hash string
 }
@@ -55,6 +59,7 @@ func (p Password) IsEmpty() bool {
 	return p.hash == ""
 }
 
+// UserName 值对象，包含用户名长度校验。
 type UserName struct {
 	value string
 }
@@ -71,6 +76,7 @@ func (n UserName) IsValid() bool {
 	return len(n.value) >= 2 && len(n.value) <= 50
 }
 
+// AvatarURL 值对象，用于封装头像 URL。
 type AvatarURL struct {
 	value string
 }

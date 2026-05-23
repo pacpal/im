@@ -22,6 +22,8 @@ service UserService {
 
 message RegisterRequest {
     string tele = 1;
+    string id = 4;
+    string email=5;
     string name = 2;
     string password = 3;
 }
@@ -34,6 +36,8 @@ message RegisterResponse {
 message LoginRequest {
     string tele = 1;
     string password = 2;
+    string id=3;
+    string email = 4;
 }
 
 message LoginResponse {

@@ -1,5 +1,7 @@
+// Package dto 定义用户服务对外 HTTP/JSON 层使用的数据传输对象（DTO）。
 package dto
 
+// RegisterRequest 表示注册接口所需的请求体。
 type RegisterRequest struct {
 	Tele     string `json:"tele" binding:"required"`
 	Name     string `json:"name" binding:"required"`

@@ -1,3 +1,4 @@
+// Package proxy 提供 Gateway 到后端各服务的连接代理，负责服务地址发现与自动重连。
 package proxy
 
 import (
@@ -16,6 +17,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// ServiceProxy 管理与 User/Group/Message 等后端服务的 gRPC 连接与客户端实例。
 type ServiceProxy struct {
 	resolver      *discovery.Resolver
 	cfg           *config.GatewayConfig
@@ -28,6 +30,7 @@ type ServiceProxy struct {
 	mu            sync.RWMutex
 }
 
+// NewServiceProxy 创建 ServiceProxy，并在后台启动服务观察与自动重连逻辑。
 func NewServiceProxy(resolver *discovery.Resolver, cfg *config.GatewayConfig) *ServiceProxy {
 	p := &ServiceProxy{
 		resolver: resolver,
@@ -176,6 +179,7 @@ func (p *ServiceProxy) DiscoverService(ctx context.Context, serviceName string) 
 	return p.resolver.Discover(ctx, serviceName)
 }
 
+// GetServiceAddr 返回指定服务的一个可用实例地址（超时 5s）。
 func (p *ServiceProxy) GetServiceAddr(serviceName string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

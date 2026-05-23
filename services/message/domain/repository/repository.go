@@ -1,3 +1,4 @@
+// Package repository 定义消息服务使用的仓储与缓存接口。
 package repository
 
 import (
@@ -5,6 +6,7 @@ import (
 	"context"
 )
 
+// MessageRepository 抽象消息的持久化操作。
 type MessageRepository interface {
 	Create(ctx context.Context, message *entity.Message) error
 	GetByID(ctx context.Context, id string) (*entity.Message, error)
@@ -17,6 +19,7 @@ type MessageRepository interface {
 	Revoke(ctx context.Context, id string) error
 }
 
+// MessageCache 抽象缓存层（Redis）的接口，用于在线用户和未读计数管理。
 type MessageCache interface {
 	GetOnlineUsers(ctx context.Context) (map[string]bool, error)
 	SetOnlineUser(ctx context.Context, userID string) error

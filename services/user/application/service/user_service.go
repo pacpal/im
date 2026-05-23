@@ -1,3 +1,4 @@
+// Package service 提供 user 服务的业务逻辑实现（Use case 层）。
 package service
 
 import (
@@ -15,6 +16,7 @@ import (
 )
 
 var (
+	// 常见的业务错误，供上层调用者判断处理。
 	ErrUserNotFound      = errors.New("user not found")
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrInvalidPassword   = errors.New("invalid password")
@@ -26,6 +28,7 @@ var (
 	ErrInvalidRequest    = errors.New("invalid request")
 )
 
+// UserService 实现了用户相关的业务逻辑（注册、登录、加好友、处理请求等）。
 type UserService struct {
 	userRepo          repository.UserRepository
 	friendshipRepo    repository.FriendshipRepository
@@ -36,6 +39,7 @@ type UserService struct {
 	eventPublisher    *event.EventPublisher
 }
 
+// NewUserService 构造 UserService。
 func NewUserService(
 	userRepo repository.UserRepository,
 	friendshipRepo repository.FriendshipRepository,
@@ -91,8 +95,17 @@ func (s *UserService) Register(ctx context.Context, tele, name, password string)
 	return user, nil
 }
 
-func (s *UserService) Login(ctx context.Context, tele, password string) (*entity.User, string, error) {
-	user, err := s.userRepo.GetByTele(ctx, tele)
+func (s *UserService) Login(ctx context.Context, tele, id, password string) (*entity.User, string, error) {
+	var user *entity.User
+	var err error
+
+	if tele != "" {
+		user, err = s.userRepo.GetByTele(ctx, tele)
+	} else if id != "" {
+		user, err = s.userRepo.GetByID(ctx, id)
+	} else {
+		return nil, "", ErrUserNotFound
+	}
 	if err != nil {
 		return nil, "", ErrUserNotFound
 	}

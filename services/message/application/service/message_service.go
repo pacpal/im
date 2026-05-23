@@ -1,3 +1,4 @@
+// Package service 提供 message 服务的业务逻辑实现。
 package service
 
 import (
@@ -16,6 +17,7 @@ var (
 	ErrAlreadyRevoked  = errors.New("message already revoked")
 )
 
+// MessageService 封装消息发送、获取、标记已读等业务行为。
 type MessageService struct {
 	messageRepo     repository.MessageRepository
 	messageCache    repository.MessageCache
@@ -24,10 +26,12 @@ type MessageService struct {
 	eventPublisher  *event.EventPublisher
 }
 
+// MessageProducer 定义消息发布的接口（MQ 层）。
 type MessageProducer interface {
 	PublishMessage(ctx context.Context, msg *entity.Message) error
 }
 
+// NewMessageService 创建 MessageService 实例。
 func NewMessageService(
 	messageRepo repository.MessageRepository,
 	messageCache repository.MessageCache,

@@ -1,3 +1,4 @@
+// Package repository 定义 user 域的持久化接口，供上层业务层依赖。
 package repository
 
 import (
@@ -5,6 +6,7 @@ import (
 	"context"
 )
 
+// UserRepository 定义用户持久化所需的方法集合。
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByID(ctx context.Context, id string) (*entity.User, error)
@@ -17,6 +19,7 @@ type UserRepository interface {
 	GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error)
 }
 
+// FriendshipRepository 定义好友关系相关的持久化方法。
 type FriendshipRepository interface {
 	Create(ctx context.Context, f *entity.Friendship) error
 	Delete(ctx context.Context, userID, friendID string) error
@@ -25,6 +28,7 @@ type FriendshipRepository interface {
 	GetFriendIDs(ctx context.Context, userID string) ([]string, error)
 }
 
+// FriendRequestRepository 定义好友申请相关的持久化方法。
 type FriendRequestRepository interface {
 	Create(ctx context.Context, req *entity.FriendRequest) error
 	GetByID(ctx context.Context, id string) (*entity.FriendRequest, error)

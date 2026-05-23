@@ -1,7 +1,9 @@
+// Package entity 定义 group 域的实体及其行为。
 package entity
 
 import "time"
 
+// Group 表示群组实体。
 type Group struct {
 	ID          string
 	Name        string
@@ -13,6 +15,7 @@ type Group struct {
 	UpdatedAt   time.Time
 }
 
+// GroupType 表示群组类型。
 type GroupType string
 
 const (
@@ -21,6 +24,7 @@ const (
 	GroupTypePublic  GroupType = "public"
 )
 
+// NewGroup 创建一个新的 Group 实例。
 func NewGroup(id, name, ownerID, description string) *Group {
 	return &Group{
 		ID:          id,
@@ -33,6 +37,7 @@ func NewGroup(id, name, ownerID, description string) *Group {
 	}
 }
 
+// Update 更新群组信息并更新时间戳。
 func (g *Group) Update(name, description, imageURL string) {
 	if name != "" {
 		g.Name = name
@@ -46,10 +51,12 @@ func (g *Group) Update(name, description, imageURL string) {
 	g.UpdatedAt = time.Now()
 }
 
+// IsOwner 判断给定用户是否为群主。
 func (g *Group) IsOwner(userID string) bool {
 	return g.OwnerID == userID
 }
 
+// GroupMember 表示群成员。
 type GroupMember struct {
 	GroupID  string
 	UserID   string
@@ -58,6 +65,7 @@ type GroupMember struct {
 	JoinedAt time.Time
 }
 
+// MemberRole 表示群成员角色的枚举。
 type MemberRole int
 
 const (
@@ -66,6 +74,7 @@ const (
 	MemberRoleOwner  MemberRole = 3
 )
 
+// NewGroupMember 创建新的群成员记录。
 func NewGroupMember(groupID, userID string, role MemberRole) *GroupMember {
 	return &GroupMember{
 		GroupID:  groupID,
@@ -75,18 +84,22 @@ func NewGroupMember(groupID, userID string, role MemberRole) *GroupMember {
 	}
 }
 
+// IsOwner 判断成员是否为群主。
 func (m *GroupMember) IsOwner() bool {
 	return m.Role == MemberRoleOwner
 }
 
+// IsAdmin 判断成员是否至少为管理员。
 func (m *GroupMember) IsAdmin() bool {
 	return m.Role >= MemberRoleAdmin
 }
 
+// SetRole 设置成员角色。
 func (m *GroupMember) SetRole(role MemberRole) {
 	m.Role = role
 }
 
+// GroupJoinRequest 表示用户加入群组的请求。
 type GroupJoinRequest struct {
 	ID        string
 	UserID    string
@@ -97,6 +110,7 @@ type GroupJoinRequest struct {
 	UpdatedAt time.Time
 }
 
+// RequestStatus 表示加入请求的状态字符串类型。
 type RequestStatus string
 
 const (
@@ -105,6 +119,7 @@ const (
 	RequestStatusRejected RequestStatus = "rejected"
 )
 
+// NewGroupJoinRequest 创建一个 join 请求并设置为 pending。
 func NewGroupJoinRequest(id, userID, groupID, reason string) *GroupJoinRequest {
 	return &GroupJoinRequest{
 		ID:        id,
@@ -117,16 +132,19 @@ func NewGroupJoinRequest(id, userID, groupID, reason string) *GroupJoinRequest {
 	}
 }
 
+// Accept 接受请求并更新时间戳。
 func (r *GroupJoinRequest) Accept() {
 	r.Status = RequestStatusAccepted
 	r.UpdatedAt = time.Now()
 }
 
+// Reject 拒绝请求并更新时间戳。
 func (r *GroupJoinRequest) Reject() {
 	r.Status = RequestStatusRejected
 	r.UpdatedAt = time.Now()
 }
 
+// IsPending 判断请求是否为 pending。
 func (r *GroupJoinRequest) IsPending() bool {
 	return r.Status == RequestStatusPending
 }

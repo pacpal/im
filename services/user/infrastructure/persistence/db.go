@@ -1,3 +1,4 @@
+// Package persistence 提供数据库连接与 GORM 封装（此文件为 Postgres 的实现）。
 package persistence
 
 import (
@@ -10,10 +11,12 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// PostgresDB 封装了 *gorm.DB，便于统一管理连接与生命周期。
 type PostgresDB struct {
 	db *gorm.DB
 }
 
+// NewPostgresDB 使用配置创建并返回 Postgres 数据库连接封装。
 func NewPostgresDB(cfg config.DatabaseConfig) (*PostgresDB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",

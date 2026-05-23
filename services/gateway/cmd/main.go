@@ -1,3 +1,4 @@
+// Package main 是 Gateway 服务的入口，初始化配置、发现、路由与 WebSocket 服务并启动 HTTP 服务器。
 package main
 
 import (
@@ -129,6 +130,7 @@ func main() {
 	logger.Info("Server stopped")
 }
 
+// getConfigPath 返回配置文件路径，优先使用环境变量 CONFIG_PATH，否则返回默认路径。
 func getConfigPath() string {
 	if path := os.Getenv("CONFIG_PATH"); path != "" {
 		return path

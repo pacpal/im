@@ -1,3 +1,4 @@
+// Package cache 提供对 Redis 客户端的轻量封装，便于在项目中统一使用。
 package cache
 
 import (
@@ -7,12 +8,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Client Redis 客户端封装
+// Client 是对 github.com/redis/go-redis 的简单封装，暴露常用操作方法。
 type Client struct {
 	rdb *redis.Client
 }
 
 // NewClient 创建 Redis 客户端
+// NewClient 创建并返回一个连接到指定地址的 Redis 客户端。
 func NewClient(addr, password string, db int) *Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     addr,

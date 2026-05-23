@@ -1,3 +1,4 @@
+// Package handler 提供 Gateway 的 HTTP API 处理函数，主要负责参数校验、鉴权转发以及调用后端 gRPC 服务。
 package handler
 
 import (
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// Register 处理用户注册请求并转发到用户服务。
 func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req user.RegisterRequest
@@ -39,6 +41,7 @@ func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// Login 处理用户登录请求并转发到用户服务。
 func Login(p *proxy.ServiceProxy, jwtUtil interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req user.LoginRequest
@@ -65,6 +68,7 @@ func Login(p *proxy.ServiceProxy, jwtUtil interface{}) gin.HandlerFunc {
 	}
 }
 
+// GetUser 获取指定用户的信息。
 func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
@@ -90,6 +94,7 @@ func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetFriends 获取用户好友列表。
 func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
@@ -110,6 +115,7 @@ func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// AddFriend 发送好友请求（转发到用户服务）。
 func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
@@ -143,6 +149,7 @@ func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// AcceptFriendRequest 接受或拒绝好友请求。
 func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
@@ -176,6 +183,7 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetPendingFriendRequests 获取当前用户的待处理好友请求。
 func GetPendingFriendRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
@@ -196,6 +204,7 @@ func GetPendingFriendRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// CreateGroup 创建群组。
 func CreateGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
@@ -229,6 +238,7 @@ func CreateGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetGroup 获取群组信息。
 func GetGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
@@ -249,6 +259,7 @@ func GetGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetGroupMembers 获取群组成员列表。
 func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
@@ -269,6 +280,7 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetUserGroups 获取用户加入的群组列表。
 func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
@@ -289,6 +301,7 @@ func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// JoinGroup 发送加入群组请求。
 func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
@@ -322,6 +335,7 @@ func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// AcceptGroupJoinRequest 群主接受或拒绝加入群组的请求。
 func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
@@ -354,6 +368,7 @@ func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// LeaveGroup 退出群组。
 func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
@@ -379,6 +394,7 @@ func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// SendMessage 发送消息（转发到消息服务）。
 func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
@@ -414,6 +430,7 @@ func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetOfflineMessages 获取离线消息列表。
 func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
@@ -438,6 +455,7 @@ func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// MarkAsRead 标记指定消息为已读。
 func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		msgID := c.Param("id")
@@ -461,6 +479,7 @@ func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// MarkAllAsRead 将当前用户的所有消息标记为已读。
 func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
@@ -483,6 +502,7 @@ func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+// GetUnreadCount 获取当前用户未读消息数。
 func GetUnreadCount(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")

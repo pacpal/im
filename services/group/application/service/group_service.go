@@ -1,3 +1,4 @@
+// Package service 提供 group 服务的业务逻辑实现。
 package service
 
 import (
@@ -22,6 +23,7 @@ var (
 	ErrCannotLeaveAsOwner = errors.New("owner cannot leave group, transfer ownership first")
 )
 
+// GroupService 提供群组的创建、更新、加入、处理请求等业务逻辑。
 type GroupService struct {
 	groupRepo            repository.GroupRepository
 	groupMemberRepo      repository.GroupMemberRepository
@@ -30,6 +32,7 @@ type GroupService struct {
 	eventPublisher       *event.EventPublisher
 }
 
+// NewGroupService 创建 GroupService 实例。
 func NewGroupService(
 	groupRepo repository.GroupRepository,
 	groupMemberRepo repository.GroupMemberRepository,

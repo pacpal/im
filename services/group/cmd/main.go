@@ -1,3 +1,4 @@
+// Package main 是 group 服务的入口，负责初始化并启动 gRPC 服务。
 package main
 
 import (
@@ -105,6 +106,7 @@ func main() {
 	logger.Info("Server stopped")
 }
 
+// getConfigPath 返回 group 服务配置文件路径，优先使用环境变量 CONFIG_PATH。
 func getConfigPath() string {
 	if path := os.Getenv("CONFIG_PATH"); path != "" {
 		return path

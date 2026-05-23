@@ -1,3 +1,4 @@
+// Package cache 提供 user 服务的 Redis 缓存封装（如用户信息缓存）。
 package cache
 
 import (
@@ -10,11 +11,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// UserCache 提供对用户信息的 Redis 缓存操作。
 type UserCache struct {
 	client *redis.Client
 	ttl    time.Duration
 }
 
+// NewUserCache 创建 UserCache 并使用默认 TTL（1 小时）。
 func NewUserCache(client *redis.Client) *UserCache {
 	return &UserCache{
 		client: client,

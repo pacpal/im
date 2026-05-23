@@ -31,7 +31,7 @@ func (s *UserServer) Register(ctx context.Context, req *user.RegisterRequest) (*
 }
 
 func (s *UserServer) Login(ctx context.Context, req *user.LoginRequest) (*user.LoginResponse, error) {
-	u, token, err := s.userSvc.Login(ctx, req.Tele, req.Password)
+	u, token, err := s.userSvc.Login(ctx, req.Tele, req.Id, req.Password)
 	if err != nil {
 		return nil, err
 	}

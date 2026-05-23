@@ -1,3 +1,4 @@
+// Package ws 提供简单的 WebSocket Hub 与 Client 管理，用于广播与点对点消息分发。
 package ws
 
 import (
@@ -5,6 +6,7 @@ import (
 	"sync"
 )
 
+// Client 表示一个 WebSocket 客户端在 Hub 中的抽象结构。
 type Client struct {
 	hub    *Hub
 	conn   interface{}
@@ -12,6 +14,7 @@ type Client struct {
 	userID string
 }
 
+// Hub 管理所有活跃客户端，支持注册、注销与广播。
 type Hub struct {
 	clients    map[string]*Client
 	broadcast  chan []byte
@@ -20,6 +23,7 @@ type Hub struct {
 	mu         sync.RWMutex
 }
 
+// NewHub 创建并返回一个 Hub 实例。
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[string]*Client),

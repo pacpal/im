@@ -1,3 +1,4 @@
+// Package mq 提供对 RabbitMQ 的轻量封装（连接、生产者、消费者）。
 package mq
 
 import (
@@ -9,7 +10,7 @@ import (
 	amqp091 "github.com/rabbitmq/amqp091-go"
 )
 
-// Connection RabbitMQ 连接管理
+// Connection 管理 RabbitMQ 的底层连接，支持并发安全的 channel 创建。
 type Connection struct {
 	conn *amqp091.Connection
 	url  string

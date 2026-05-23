@@ -1,3 +1,4 @@
+// Package persistence 提供基于 GORM 的持久化实现（User、Friendship、FriendRequest 等）。
 package persistence
 
 import (
@@ -11,10 +12,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// UserRepository 是 UserRepository 接口的 GORM 实现。
 type UserRepository struct {
 	db *gorm.DB
 }
 
+// NewUserRepository 返回一个实现了 repository.UserRepository 的持久化实例。
 func NewUserRepository(db *gorm.DB) repository.UserRepository {
 	return &UserRepository{db: db}
 }
@@ -94,10 +97,12 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.
 	return users, nil
 }
 
+// FriendshipRepository 是 FriendshipRepository 接口的 GORM 实现。
 type FriendshipRepository struct {
 	db *gorm.DB
 }
 
+// NewFriendshipRepository 创建 FriendshipRepository。
 func NewFriendshipRepository(db *gorm.DB) repository.FriendshipRepository {
 	return &FriendshipRepository{db: db}
 }
@@ -162,10 +167,12 @@ func (r *FriendshipRepository) GetFriendIDs(ctx context.Context, userID string) 
 	return friendIDs, nil
 }
 
+// FriendRequestRepository 是 FriendRequestRepository 的 GORM 实现。
 type FriendRequestRepository struct {
 	db *gorm.DB
 }
 
+// NewFriendRequestRepository 创建 FriendRequestRepository。
 func NewFriendRequestRepository(db *gorm.DB) repository.FriendRequestRepository {
 	return &FriendRequestRepository{db: db}
 }
