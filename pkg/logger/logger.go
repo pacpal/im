@@ -4,21 +4,34 @@ package logger
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var sugar *zap.SugaredLogger
+var lgr *zap.Logger
 
 // Init 初始化全局 logger，level: debug/info/warn/error，format: json/console
-// level 控制日志级别，format 支持 "json" 或 "console"。
+// 输出包含 timestamp、caller、stacktrace（error 及以上级别）
 func Init(level string, format string) error {
 	var cfg zap.Config
 	if strings.ToLower(format) == "console" {
 		cfg = zap.NewDevelopmentConfig()
+		cfg.Encoding = "console"
 	} else {
 		cfg = zap.NewProductionConfig()
+		cfg.Encoding = "json"
 	}
+
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	cfg.EncoderConfig.CallerKey = "caller"
+	cfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	cfg.EncoderConfig.MessageKey = "message"
+	cfg.EncoderConfig.StacktraceKey = "stacktrace"
 
 	switch strings.ToLower(level) {
 	case "debug":
@@ -31,18 +44,24 @@ func Init(level string, format string) error {
 		cfg.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
 	}
 
-	l, err := cfg.Build()
+	if len(cfg.OutputPaths) == 0 {
+		cfg.OutputPaths = []string{"stdout"}
+	}
+
+	lg, err := cfg.Build(zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 	if err != nil {
 		return err
 	}
-	sugar = l.Sugar()
+
+	lgr = lg
+	sugar = lgr.Sugar()
 	return nil
 }
 
 // Sync 刷新并关闭底层日志缓冲（需要在程序退出时调用）。
 func Sync() {
-	if sugar != nil {
-		_ = sugar.Sync()
+	if lgr != nil {
+		_ = lgr.Sync()
 	}
 }
 
@@ -126,7 +145,101 @@ func Fatal(args ...interface{}) {
 	fmt.Println(args...)
 }
 
-// With returns a sugared logger with added context fields
+// 结构化日志便捷方法，方便在代码中使用 key-value 的形式记录额外字段
+func Infow(msg string, keysAndValues ...interface{}) {
+	if sugar != nil {
+		sugar.Infow(msg, keysAndValues...)
+		return
+	}
+	if len(keysAndValues) > 0 {
+		fmt.Println(append([]interface{}{msg}, keysAndValues...)...)
+	} else {
+		fmt.Println(msg)
+	}
+}
+
+func Errorw(msg string, keysAndValues ...interface{}) {
+	if sugar != nil {
+		sugar.Errorw(msg, keysAndValues...)
+		return
+	}
+	if len(keysAndValues) > 0 {
+		fmt.Println(append([]interface{}{msg}, keysAndValues...)...)
+	} else {
+		fmt.Println(msg)
+	}
+}
+
+func Debugw(msg string, keysAndValues ...interface{}) {
+	if sugar != nil {
+		sugar.Debugw(msg, keysAndValues...)
+		return
+	}
+	if len(keysAndValues) > 0 {
+		fmt.Println(append([]interface{}{msg}, keysAndValues...)...)
+	} else {
+		fmt.Println(msg)
+	}
+}
+
+func Warnw(msg string, keysAndValues ...interface{}) {
+	if sugar != nil {
+		sugar.Warnw(msg, keysAndValues...)
+		return
+	}
+	if len(keysAndValues) > 0 {
+		fmt.Println(append([]interface{}{msg}, keysAndValues...)...)
+	} else {
+		fmt.Println(msg)
+	}
+}
+
+func Fatalw(msg string, keysAndValues ...interface{}) {
+	if sugar != nil {
+		sugar.Fatalw(msg, keysAndValues...)
+		return
+	}
+	if len(keysAndValues) > 0 {
+		fmt.Println(append([]interface{}{msg}, keysAndValues...)...)
+	} else {
+		fmt.Println(msg)
+	}
+}
+
+// StartStep 用于记录某个操作的开始与结束，返回一个在操作结束时调用的函数。
+// 用法：done := logger.StartStep("UserService.AddFriend", "from", fromUID, "to", toUID)
+//
+//	defer done(err) 或在每个分支返回前调用 done(err)
+func StartStep(name string, fields ...interface{}) func(error) {
+	start := time.Now()
+	if sugar != nil {
+		sugar.Infow(name+" started", append(fields, "phase", "start")...)
+	} else {
+		if len(fields) > 0 {
+			fmt.Println(append([]interface{}{name + " started"}, fields...)...)
+		} else {
+			fmt.Println(name + " started")
+		}
+	}
+
+	return func(err error) {
+		duration := time.Since(start)
+		if err != nil {
+			if sugar != nil {
+				sugar.Errorw(name+" failed", append(fields, "phase", "end", "duration", duration.String(), "error", err)...)
+			} else {
+				fmt.Println(append([]interface{}{name + " failed", "duration", duration.String(), "error", err}, fields...)...)
+			}
+			return
+		}
+		if sugar != nil {
+			sugar.Infow(name+" completed", append(fields, "phase", "end", "duration", duration.String())...)
+		} else {
+			fmt.Println(append([]interface{}{name + " completed", "duration", duration.String()}, fields...)...)
+		}
+	}
+}
+
 // With 返回一个带有附加上下文字段的 SugaredLogger，方便链式调用。
 func With(args ...interface{}) *zap.SugaredLogger {
 	if sugar != nil {

@@ -24,9 +24,11 @@ func LoggingUnaryInterceptor() grpc.UnaryServerInterceptor {
 		duration := time.Since(start)
 
 		if err != nil {
-			logger.Errorf("[gRPC] method=%s duration=%s error=%v", info.FullMethod, duration, err)
+			logger.Errorw("gRPC request completed",
+				"component", "grpc", "method", info.FullMethod, "duration", duration, "error", err)
 		} else {
-			logger.Infof("[gRPC] method=%s duration=%s", info.FullMethod, duration)
+			logger.Infow("gRPC request completed",
+				"component", "grpc", "method", info.FullMethod, "duration", duration)
 		}
 
 		return resp, err
@@ -38,7 +40,8 @@ func RecoveryUnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Errorf("[gRPC Recovery] method=%s panic=%v\nstack:\n%s", info.FullMethod, r, debug.Stack())
+				logger.Errorw("gRPC panic recovered",
+					"component", "grpc_recovery", "method", info.FullMethod, "panic", r, "stack", string(debug.Stack()))
 				err = status.Errorf(codes.Internal, "internal server error")
 			}
 		}()

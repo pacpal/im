@@ -16,7 +16,8 @@ func Auth(jwtUtil *auth.JWTUtil) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			logger.Warnf("[HTTP Auth] missing authorization header method=%s path=%s ip=%s", c.Request.Method, c.Request.URL.Path, c.ClientIP())
+			logger.Warnw("HTTP Auth missing authorization header",
+				"component", "http_auth", "method", c.Request.Method, "path", c.Request.URL.Path, "ip", c.ClientIP())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "missing authorization header"})
 			c.Abort()
 			return
@@ -24,7 +25,8 @@ func Auth(jwtUtil *auth.JWTUtil) gin.HandlerFunc {
 
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			logger.Warnf("[HTTP Auth] invalid authorization header method=%s path=%s ip=%s", c.Request.Method, c.Request.URL.Path, c.ClientIP())
+			logger.Warnw("HTTP Auth invalid authorization header",
+				"component", "http_auth", "method", c.Request.Method, "path", c.Request.URL.Path, "ip", c.ClientIP())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header"})
 			c.Abort()
 			return
@@ -32,7 +34,8 @@ func Auth(jwtUtil *auth.JWTUtil) gin.HandlerFunc {
 
 		userID, err := jwtUtil.ParseToken(parts[1])
 		if err != nil {
-			logger.Warnf("[HTTP Auth] invalid token method=%s path=%s ip=%s error=%v", c.Request.Method, c.Request.URL.Path, c.ClientIP(), err)
+			logger.Warnw("HTTP Auth invalid token",
+				"component", "http_auth", "method", c.Request.Method, "path", c.Request.URL.Path, "ip", c.ClientIP(), "error", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
 			return
@@ -70,9 +73,11 @@ func Logging() gin.HandlerFunc {
 
 		status := c.Writer.Status()
 		if len(c.Errors) > 0 || status >= 400 {
-			logger.Errorf("[HTTP] %s %s status=%d ip=%s errors=%s", method, path, status, c.ClientIP(), c.Errors.String())
+			logger.Errorw("HTTP request completed",
+				"component", "http", "method", method, "path", path, "status", status, "ip", c.ClientIP(), "errors", c.Errors.String())
 		} else {
-			logger.Infof("[HTTP] %s %s status=%d ip=%s", method, path, status, c.ClientIP())
+			logger.Infow("HTTP request completed",
+				"component", "http", "method", method, "path", path, "status", status, "ip", c.ClientIP())
 		}
 	}
 }
@@ -82,7 +87,8 @@ func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Errorf("[HTTP Recovery] panic=%v path=%s ip=%s\nstack:\n%s", r, c.Request.URL.Path, c.ClientIP(), debug.Stack())
+				logger.Errorw("HTTP panic recovered",
+					"component", "http_recovery", "panic", r, "path", c.Request.URL.Path, "ip", c.ClientIP(), "stack", string(debug.Stack()))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 				c.Abort()
 			}

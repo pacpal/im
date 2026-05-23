@@ -32,7 +32,8 @@ func main() {
 	}
 
 	if err := logger.Init(cfg.Log.Level, cfg.Log.Format); err != nil {
-		fmt.Printf("Failed to init logger: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to init logger: %v\n", err)
+		os.Exit(1)
 	}
 	defer logger.Sync()
 

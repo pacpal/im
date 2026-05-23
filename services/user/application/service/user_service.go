@@ -4,6 +4,7 @@ package service
 import (
 	"IM/pkg/auth"
 	"IM/pkg/id"
+	"IM/pkg/logger"
 	"IM/services/user/domain/entity"
 	"IM/services/user/domain/event"
 	"IM/services/user/domain/repository"
@@ -162,28 +163,39 @@ func (s *UserService) GetFriends(ctx context.Context, userID string) ([]*entity.
 }
 
 func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason string) error {
+	done := logger.StartStep("UserService.AddFriend", "from", fromUID, "to", toUID)
+
 	if fromUID == toUID {
+		done(ErrCannotAddSelf)
 		return ErrCannotAddSelf
 	}
 
 	_, err := s.userRepo.GetByID(ctx, toUID)
 	if err != nil {
+		done(err)
 		return ErrUserNotFound
 	}
+	logger.Infow("AddFriend: target user found", "component", "user_service", "from", fromUID, "to", toUID)
 
 	exists, err := s.friendshipRepo.Exists(ctx, fromUID, toUID)
 	if err != nil {
+		done(err)
 		return err
 	}
 	if exists {
+		done(ErrAlreadyFriends)
+		logger.Infow("AddFriend: already friends", "component", "user_service", "from", fromUID, "to", toUID)
 		return ErrAlreadyFriends
 	}
 
 	requestExists, err := s.friendRequestRepo.Exists(ctx, fromUID, toUID)
 	if err != nil {
+		done(err)
 		return err
 	}
 	if requestExists {
+		done(ErrRequestExists)
+		logger.Infow("AddFriend: request already exists", "component", "user_service", "from", fromUID, "to", toUID)
 		return ErrRequestExists
 	}
 
@@ -191,8 +203,10 @@ func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason stri
 	friendRequest := entity.NewFriendRequest(requestID, fromUID, toUID, reason)
 
 	if err := s.friendRequestRepo.Create(ctx, friendRequest); err != nil {
+		done(err)
 		return err
 	}
+	logger.Infow("AddFriend: friend request created", "component", "user_service", "request_id", requestID, "from", fromUID, "to", toUID)
 
 	s.eventPublisher.Publish(&event.FriendRequestCreatedEvent{
 		BaseEvent: event.BaseEvent{
@@ -205,6 +219,8 @@ func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason stri
 		ToUID:     toUID,
 	})
 
+	logger.Infow("AddFriend: published FriendRequestCreatedEvent", "component", "user_service", "request_id", requestID)
+	done(nil)
 	return nil
 }
 
