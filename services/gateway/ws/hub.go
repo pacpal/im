@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"log"
+	"IM/pkg/logger"
 	"sync"
 )
 
@@ -36,7 +36,7 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			h.clients[client.userID] = client
 			h.mu.Unlock()
-			log.Printf("User %s connected", client.userID)
+			logger.Infof("User %s connected", client.userID)
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -45,7 +45,7 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 			h.mu.Unlock()
-			log.Printf("User %s disconnected", client.userID)
+			logger.Infof("User %s disconnected", client.userID)
 
 		case message := <-h.broadcast:
 			h.mu.RLock()

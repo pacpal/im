@@ -2,12 +2,12 @@ package interceptor
 
 import (
 	"context"
-	"log"
 	"runtime/debug"
 	"strings"
 	"time"
 
 	"IM/pkg/auth"
+	"IM/pkg/logger"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -23,9 +23,9 @@ func LoggingUnaryInterceptor() grpc.UnaryServerInterceptor {
 		duration := time.Since(start)
 
 		if err != nil {
-			log.Printf("[gRPC] method=%s duration=%s error=%v", info.FullMethod, duration, err)
+			logger.Errorf("[gRPC] method=%s duration=%s error=%v", info.FullMethod, duration, err)
 		} else {
-			log.Printf("[gRPC] method=%s duration=%s", info.FullMethod, duration)
+			logger.Infof("[gRPC] method=%s duration=%s", info.FullMethod, duration)
 		}
 
 		return resp, err
@@ -37,7 +37,7 @@ func RecoveryUnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("[gRPC Recovery] method=%s panic=%v\nstack:\n%s", info.FullMethod, r, debug.Stack())
+				logger.Errorf("[gRPC Recovery] method=%s panic=%v\nstack:\n%s", info.FullMethod, r, debug.Stack())
 				err = status.Errorf(codes.Internal, "internal server error")
 			}
 		}()

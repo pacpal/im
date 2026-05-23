@@ -6,12 +6,13 @@ import (
 	"IM/pkg/discovery"
 	"IM/pkg/id"
 	"IM/pkg/interceptor"
+	"IM/pkg/logger"
 	"IM/services/group/application/service"
 	"IM/services/group/domain/event"
 	"IM/services/group/infrastructure/persistence"
 	grpcserver "IM/services/group/interfaces/grpc"
 	"context"
-	"log"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -25,13 +26,18 @@ import (
 func main() {
 	cfg, err := config.Load(getConfigPath())
 	if err != nil {
-		log.Printf("Using default config: %v", err)
+		fmt.Printf("Using default config: %v\n", err)
 		cfg = config.DefaultGroupConfig()
 	}
 
+	if err := logger.Init(cfg.Log.Level, cfg.Log.Format); err != nil {
+		fmt.Printf("Failed to init logger: %v\n", err)
+	}
+	defer logger.Sync()
+
 	registry, err := discovery.NewRegistry(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
-		log.Fatalf("Failed to create registry: %v", err)
+		logger.Fatalf("Failed to create registry: %v", err)
 	}
 	defer registry.Close()
 
@@ -40,13 +46,13 @@ func main() {
 
 	serviceAddr := cfg.Server.Host + ":" + cfg.Server.GRPCPort
 	if err := registry.Register(ctx, cfg.Server.Name, serviceAddr, cfg.Etcd.TTL); err != nil {
-		log.Fatalf("Failed to register service: %v", err)
+		logger.Fatalf("Failed to register service: %v", err)
 	}
-	log.Printf("Service %s registered at %s", cfg.Server.Name, serviceAddr)
+	logger.Infof("Service %s registered at %s", cfg.Server.Name, serviceAddr)
 
 	db, err := persistence.NewPostgresDB(cfg.Database)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
@@ -61,7 +67,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		logger.Fatalf("Failed to listen: %v", err)
 	}
 
 	jwtSecret := []byte(cfg.JWT.Secret)
@@ -79,9 +85,9 @@ func main() {
 	healthServer.SetServingStatus(cfg.Server.Name, healthpb.HealthCheckResponse_SERVING)
 
 	go func() {
-		log.Printf("gRPC server starting on :%s", cfg.Server.GRPCPort)
+		logger.Infof("gRPC server starting on :%s", cfg.Server.GRPCPort)
 		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve: %v", err)
+			logger.Fatalf("Failed to serve: %v", err)
 		}
 	}()
 
@@ -89,14 +95,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 	grpcServer.GracefulStop()
 
 	if err := registry.Deregister(ctx, cfg.Server.Name, serviceAddr); err != nil {
-		log.Printf("Failed to deregister service: %v", err)
+		logger.Errorf("Failed to deregister service: %v", err)
 	}
 
-	log.Println("Server stopped")
+	logger.Info("Server stopped")
 }
 
 func getConfigPath() string {

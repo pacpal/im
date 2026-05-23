@@ -7,7 +7,10 @@ import (
 	"IM/services/gateway/proxy"
 	"net/http"
 
+	"IM/pkg/logger"
+
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
 )
 
 func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
@@ -18,8 +21,16 @@ func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
 			return
 		}
 
-		resp, err := p.UserClient().Register(c.Request.Context(), &req)
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().Register(ctx, &req)
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -36,8 +47,16 @@ func Login(p *proxy.ServiceProxy, jwtUtil interface{}) gin.HandlerFunc {
 			return
 		}
 
-		resp, err := p.UserClient().Login(c.Request.Context(), &req)
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().Login(ctx, &req)
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -49,8 +68,21 @@ func Login(p *proxy.ServiceProxy, jwtUtil interface{}) gin.HandlerFunc {
 func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
-		resp, err := p.UserClient().GetUser(c.Request.Context(), &user.GetUserRequest{UserId: userID})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				if len(ts) > 8 {
+					logger.Infof("Forwarding token prefix=%s len=%d", ts[:8], len(ts))
+				} else {
+					logger.Infof("Forwarding token len=%d", len(ts))
+				}
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().GetUser(ctx, &user.GetUserRequest{UserId: userID})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -61,8 +93,16 @@ func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
-		resp, err := p.UserClient().GetFriends(c.Request.Context(), &user.GetFriendsRequest{UserId: userID})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().GetFriends(ctx, &user.GetFriendsRequest{UserId: userID})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -82,12 +122,20 @@ func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 
 		userID, _ := c.Get("user_id")
-		resp, err := p.UserClient().AddFriend(c.Request.Context(), &user.AddFriendRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().AddFriend(ctx, &user.AddFriendRequest{
 			UserId:   userID.(string),
 			TargetId: req.FriendID,
 			Reason:   req.Reason,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -107,12 +155,20 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 
 		userID, _ := c.Get("user_id")
-		resp, err := p.UserClient().ReplyFriend(c.Request.Context(), &user.ReplyFriendRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().ReplyFriend(ctx, &user.ReplyFriendRequest{
 			UserId:    userID.(string),
 			RequestId: req.RequestID,
 			Accept:    req.Accept,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -123,8 +179,16 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetPendingFriendRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
-		resp, err := p.UserClient().GetPendingFriendRequests(c.Request.Context(), &user.GetPendingFriendRequestsRequest{UserId: userID.(string)})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.UserClient().GetPendingFriendRequests(ctx, &user.GetPendingFriendRequestsRequest{UserId: userID.(string)})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -144,12 +208,20 @@ func CreateGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 
 		userID, _ := c.Get("user_id")
-		resp, err := p.GroupClient().CreateGroup(c.Request.Context(), &group.CreateGroupRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().CreateGroup(ctx, &group.CreateGroupRequest{
 			OwnerId:     userID.(string),
 			Name:        req.Name,
 			Description: req.Description,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -160,8 +232,16 @@ func CreateGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
-		resp, err := p.GroupClient().GetGroup(c.Request.Context(), &group.GetGroupRequest{GroupId: groupID})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().GetGroup(ctx, &group.GetGroupRequest{GroupId: groupID})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -172,8 +252,16 @@ func GetGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
-		resp, err := p.GroupClient().GetMembers(c.Request.Context(), &group.GetMembersRequest{GroupId: groupID})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().GetMembers(ctx, &group.GetMembersRequest{GroupId: groupID})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -184,8 +272,16 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
-		resp, err := p.GroupClient().GetUserGroups(c.Request.Context(), &group.GetUserGroupsRequest{UserId: userID})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().GetUserGroups(ctx, &group.GetUserGroupsRequest{UserId: userID})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -205,12 +301,20 @@ func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 
 		userID, _ := c.Get("user_id")
-		resp, err := p.GroupClient().JoinGroup(c.Request.Context(), &group.JoinGroupRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().JoinGroup(ctx, &group.JoinGroupRequest{
 			UserId:  userID.(string),
 			GroupId: req.GroupID,
 			Reason:  req.Reason,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -229,12 +333,20 @@ func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 			return
 		}
 		userID, _ := c.Get("user_id")
-		resp, err := p.GroupClient().ReplyGroupJoin(c.Request.Context(), &group.ReplyGroupJoinRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().ReplyGroupJoin(ctx, &group.ReplyGroupJoinRequest{
 			OwnerId:   userID.(string),
 			RequestId: req.GroupID,
 			Accept:    req.Accept,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -247,11 +359,19 @@ func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 		groupID := c.Param("id")
 		userID, _ := c.Get("user_id")
 
-		resp, err := p.GroupClient().LeaveGroup(c.Request.Context(), &group.LeaveGroupRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.GroupClient().LeaveGroup(ctx, &group.LeaveGroupRequest{
 			UserId:  userID.(string),
 			GroupId: groupID,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -272,13 +392,21 @@ func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 
 		userID, _ := c.Get("user_id")
-		resp, err := p.MessageClient().SendMessage(c.Request.Context(), &message.SendMessageRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.MessageClient().SendMessage(ctx, &message.SendMessageRequest{
 			SenderId:   userID.(string),
 			ReceiverId: req.ReceiverID,
 			Content:    req.Content,
 			MsgType:    req.MsgType,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -289,12 +417,20 @@ func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
-		resp, err := p.MessageClient().GetOfflineMessages(c.Request.Context(), &message.GetOfflineMessagesRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.MessageClient().GetOfflineMessages(ctx, &message.GetOfflineMessagesRequest{
 			UserId: userID.(string),
 			Limit:  50,
 			Offset: 0,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -306,10 +442,18 @@ func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		msgID := c.Param("id")
 
-		resp, err := p.MessageClient().MarkAsRead(c.Request.Context(), &message.MarkAsReadRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.MessageClient().MarkAsRead(ctx, &message.MarkAsReadRequest{
 			MsgId: msgID,
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -320,10 +464,18 @@ func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
-		resp, err := p.MessageClient().MarkAllAsRead(c.Request.Context(), &message.MarkAllAsReadRequest{
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.MessageClient().MarkAllAsRead(ctx, &message.MarkAllAsReadRequest{
 			UserId: userID.(string),
 		})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -334,8 +486,16 @@ func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 func GetUnreadCount(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
-		resp, err := p.MessageClient().GetUnreadCount(c.Request.Context(), &message.GetUnreadCountRequest{UserId: userID.(string)})
+		ctx := c.Request.Context()
+		if t, ok := c.Get("token"); ok {
+			if ts, ok2 := t.(string); ok2 {
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
+			}
+		}
+
+		resp, err := p.MessageClient().GetUnreadCount(ctx, &message.GetUnreadCountRequest{UserId: userID.(string)})
 		if err != nil {
+			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

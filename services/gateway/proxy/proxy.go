@@ -6,9 +6,9 @@ import (
 	"IM/api/gen/user"
 	"IM/pkg/config"
 	"IM/pkg/discovery"
+	"IM/pkg/logger"
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -17,15 +17,15 @@ import (
 )
 
 type ServiceProxy struct {
-	resolver    *discovery.Resolver
-	cfg         *config.GatewayConfig
-	userClient  user.UserServiceClient
-	groupClient group.GroupServiceClient
+	resolver      *discovery.Resolver
+	cfg           *config.GatewayConfig
+	userClient    user.UserServiceClient
+	groupClient   group.GroupServiceClient
 	messageClient message.MessageServiceClient
-	userConn    *grpc.ClientConn
-	groupConn   *grpc.ClientConn
-	messageConn *grpc.ClientConn
-	mu          sync.RWMutex
+	userConn      *grpc.ClientConn
+	groupConn     *grpc.ClientConn
+	messageConn   *grpc.ClientConn
+	mu            sync.RWMutex
 }
 
 func NewServiceProxy(resolver *discovery.Resolver, cfg *config.GatewayConfig) *ServiceProxy {
@@ -46,7 +46,7 @@ func (p *ServiceProxy) watchServices() {
 		if err := p.resolver.Watch(ctx, p.cfg.Services.User.Name, func(addrs []string) {
 			p.reconnectUserService(addrs)
 		}); err != nil {
-			log.Printf("Failed to watch user service: %v", err)
+			logger.Errorf("Failed to watch user service: %v", err)
 		}
 	}()
 
@@ -54,7 +54,7 @@ func (p *ServiceProxy) watchServices() {
 		if err := p.resolver.Watch(ctx, p.cfg.Services.Group.Name, func(addrs []string) {
 			p.reconnectGroupService(addrs)
 		}); err != nil {
-			log.Printf("Failed to watch group service: %v", err)
+			logger.Errorf("Failed to watch group service: %v", err)
 		}
 	}()
 
@@ -62,7 +62,7 @@ func (p *ServiceProxy) watchServices() {
 		if err := p.resolver.Watch(ctx, p.cfg.Services.Message.Name, func(addrs []string) {
 			p.reconnectMessageService(addrs)
 		}); err != nil {
-			log.Printf("Failed to watch message service: %v", err)
+			logger.Errorf("Failed to watch message service: %v", err)
 		}
 	}()
 }
@@ -82,13 +82,13 @@ func (p *ServiceProxy) reconnectUserService(addrs []string) {
 	addr := addrs[0]
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("Failed to connect to user service: %v", err)
+		logger.Errorf("Failed to connect to user service: %v", err)
 		return
 	}
 
 	p.userConn = conn
 	p.userClient = user.NewUserServiceClient(conn)
-	log.Printf("Connected to user service at %s", addr)
+	logger.Infof("Connected to user service at %s", addr)
 }
 
 func (p *ServiceProxy) reconnectGroupService(addrs []string) {
@@ -106,13 +106,13 @@ func (p *ServiceProxy) reconnectGroupService(addrs []string) {
 	addr := addrs[0]
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("Failed to connect to group service: %v", err)
+		logger.Errorf("Failed to connect to group service: %v", err)
 		return
 	}
 
 	p.groupConn = conn
 	p.groupClient = group.NewGroupServiceClient(conn)
-	log.Printf("Connected to group service at %s", addr)
+	logger.Infof("Connected to group service at %s", addr)
 }
 
 func (p *ServiceProxy) reconnectMessageService(addrs []string) {
@@ -130,13 +130,13 @@ func (p *ServiceProxy) reconnectMessageService(addrs []string) {
 	addr := addrs[0]
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("Failed to connect to message service: %v", err)
+		logger.Errorf("Failed to connect to message service: %v", err)
 		return
 	}
 
 	p.messageConn = conn
 	p.messageClient = message.NewMessageServiceClient(conn)
-	log.Printf("Connected to message service at %s", addr)
+	logger.Infof("Connected to message service at %s", addr)
 }
 
 func (p *ServiceProxy) UserClient() user.UserServiceClient {

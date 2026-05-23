@@ -4,12 +4,13 @@ import (
 	"IM/pkg/auth"
 	"IM/pkg/config"
 	"IM/pkg/discovery"
+	"IM/pkg/logger"
 	"IM/services/gateway/handler"
 	"IM/services/gateway/middleware"
 	"IM/services/gateway/proxy"
 	"IM/services/gateway/ws"
 	"context"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,13 +24,18 @@ import (
 func main() {
 	cfg, err := config.LoadGatewayConfig(getConfigPath())
 	if err != nil {
-		log.Printf("Using default config: %v", err)
+		fmt.Printf("Using default config: %v\n", err)
 		cfg = config.DefaultGatewayConfig()
 	}
 
+	if err := logger.Init(cfg.Log.Level, cfg.Log.Format); err != nil {
+		fmt.Printf("Failed to init logger: %v\n", err)
+	}
+	defer logger.Sync()
+
 	resolver, err := discovery.NewResolver(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
-		log.Fatalf("Failed to create resolver: %v", err)
+		logger.Fatalf("Failed to create resolver: %v", err)
 	}
 	defer resolver.Close()
 
@@ -101,9 +107,9 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("API Gateway starting on :%s", cfg.Server.HTTPPort)
+		logger.Infof("API Gateway starting on :%s", cfg.Server.HTTPPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			logger.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
@@ -111,16 +117,16 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Server shutdown error: %v", err)
+		logger.Errorf("Server shutdown error: %v", err)
 	}
 
-	log.Println("Server stopped")
+	logger.Info("Server stopped")
 }
 
 func getConfigPath() string {

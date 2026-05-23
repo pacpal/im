@@ -2,7 +2,7 @@ package ws
 
 import (
 	"IM/pkg/auth"
-	"log"
+	"IM/pkg/logger"
 	"net/http"
 	"time"
 
@@ -48,7 +48,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Failed to upgrade connection: %v", err)
+		logger.Errorf("Failed to upgrade connection: %v", err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (c *Client) readPump() {
 			break
 		}
 
-		log.Printf("Received message from %s: %s", c.userID, string(message))
+		logger.Infof("Received message from %s: %s", c.userID, string(message))
 	}
 }
 
