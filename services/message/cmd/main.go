@@ -8,7 +8,7 @@ import (
 	"IM/pkg/id"
 	"IM/pkg/interceptor"
 	"IM/pkg/logger"
-	"IM/services/message/application/service"
+	service "IM/services/message/application"
 	"IM/services/message/domain/event"
 	"IM/services/message/infrastructure/mq"
 	"IM/services/message/infrastructure/persistence"
