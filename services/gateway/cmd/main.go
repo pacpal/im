@@ -37,7 +37,7 @@ func main() {
 
 	resolver, err := discovery.NewResolver(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
-		logger.Fatalf("Failed to create resolver: %v", err)
+		logger.Fatalw("Failed to create resolver", "component", "gateway_cmd", "err", err)
 	}
 	defer resolver.Close()
 
@@ -109,9 +109,9 @@ func main() {
 	}
 
 	go func() {
-		logger.Infof("API Gateway starting on :%s", cfg.Server.HTTPPort)
+		logger.Infow("API Gateway starting", "component", "gateway_cmd", "http_port", cfg.Server.HTTPPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatalf("Failed to start server: %v", err)
+			logger.Fatalw("Failed to start server", "component", "gateway_cmd", "err", err)
 		}
 	}()
 
@@ -119,16 +119,16 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info("Shutting down server...")
+	logger.Infow("Shutting down server...", "component", "gateway_cmd")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Errorf("Server shutdown error: %v", err)
+		logger.Errorw("Server shutdown error", "component", "gateway_cmd", "err", err)
 	}
 
-	logger.Info("Server stopped")
+	logger.Infow("Server stopped", "component", "gateway_cmd")
 }
 
 // getConfigPath 返回配置文件路径，优先使用环境变量 CONFIG_PATH，否则返回默认路径。

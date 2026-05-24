@@ -52,7 +52,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Errorf("Failed to upgrade connection: %v", err)
+		logger.Errorw("Failed to upgrade connection", "component", "gateway_ws", "err", err)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (c *Client) readPump() {
 			break
 		}
 
-		logger.Infof("Received message from %s: %s", c.userID, string(message))
+		logger.Infow("Received WS message", "component", "gateway_ws", "user", c.userID, "message", string(message))
 	}
 }
 

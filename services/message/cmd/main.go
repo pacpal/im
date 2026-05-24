@@ -41,7 +41,7 @@ func main() {
 
 	registry, err := discovery.NewRegistry(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
-		logger.Fatalf("Failed to create registry: %v", err)
+		logger.Fatalw("Failed to create registry", "component", "message_cmd", "err", err)
 	}
 	defer registry.Close()
 
@@ -50,13 +50,13 @@ func main() {
 
 	serviceAddr := cfg.Server.Host + ":" + cfg.Server.GRPCPort
 	if err := registry.Register(ctx, cfg.Server.Name, serviceAddr, cfg.Etcd.TTL); err != nil {
-		logger.Fatalf("Failed to register service: %v", err)
+		logger.Fatalw("Failed to register service", "component", "message_cmd", "err", err)
 	}
-	logger.Infof("Service %s registered at %s", cfg.Server.Name, serviceAddr)
+	logger.Infow("Service registered", "component", "message_cmd", "service", cfg.Server.Name, "addr", serviceAddr)
 
 	mongoDB, err := persistence.NewMongoDB(cfg.Database.MongoDB)
 	if err != nil {
-		logger.Fatalf("Failed to connect to MongoDB: %v", err)
+		logger.Fatalw("Failed to connect to MongoDB", "component", "message_cmd", "err", err)
 	}
 	defer mongoDB.Close()
 
@@ -69,7 +69,7 @@ func main() {
 
 	rabbitMQ, err := mq.NewRabbitMQConnection(cfg.RabbitMQ.URL)
 	if err != nil {
-		logger.Fatalf("Failed to connect to RabbitMQ: %v", err)
+		logger.Fatalw("Failed to connect to RabbitMQ", "component", "message_cmd", "err", err)
 	}
 	defer rabbitMQ.Close()
 
@@ -84,7 +84,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
 	if err != nil {
-		logger.Fatalf("Failed to listen: %v", err)
+		logger.Fatalw("Failed to listen", "component", "message_cmd", "err", err)
 	}
 
 	jwtSecret := []byte(cfg.JWT.Secret)
@@ -102,9 +102,9 @@ func main() {
 	healthServer.SetServingStatus(cfg.Server.Name, healthpb.HealthCheckResponse_SERVING)
 
 	go func() {
-		logger.Infof("gRPC server starting on :%s", cfg.Server.GRPCPort)
+		logger.Infow("gRPC server starting", "component", "message_cmd", "grpc_port", cfg.Server.GRPCPort)
 		if err := grpcServer.Serve(lis); err != nil {
-			logger.Fatalf("Failed to serve: %v", err)
+			logger.Fatalw("Failed to serve", "component", "message_cmd", "err", err)
 		}
 	}()
 
@@ -112,14 +112,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info("Shutting down server...")
+	logger.Infow("Shutting down server...", "component", "message_cmd")
 	grpcServer.GracefulStop()
 
 	if err := registry.Deregister(ctx, cfg.Server.Name, serviceAddr); err != nil {
-		logger.Errorf("Failed to deregister service: %v", err)
+		logger.Errorw("Failed to deregister service", "component", "message_cmd", "err", err)
 	}
 
-	logger.Info("Server stopped")
+	logger.Infow("Server stopped", "component", "message_cmd")
 }
 
 // getConfigPath 返回 message 服务使用的配置文件路径。

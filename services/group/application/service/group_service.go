@@ -3,6 +3,7 @@ package service
 
 import (
 	"IM/pkg/id"
+	"IM/pkg/logger"
 	"IM/services/group/domain/entity"
 	"IM/services/group/domain/event"
 	"IM/services/group/domain/repository"
@@ -49,16 +50,19 @@ func NewGroupService(
 	}
 }
 
-func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name, description string) (*entity.Group, error) {
-	groupID := s.idGenerator.Generate()
-	group := entity.NewGroup(groupID, name, ownerID, description)
+func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name, description string) (res *entity.Group, err error) {
+	done := logger.StartStep("GroupService.CreateGroup", "owner", ownerID, "name", name)
+	defer func() { done(err) }()
 
-	if err := s.groupRepo.Create(ctx, group); err != nil {
+	groupID := s.idGenerator.Generate()
+	res = entity.NewGroup(groupID, name, ownerID, description)
+
+	if err = s.groupRepo.Create(ctx, res); err != nil {
 		return nil, err
 	}
 
 	owner := entity.NewGroupMember(groupID, ownerID, entity.MemberRoleOwner)
-	if err := s.groupMemberRepo.Create(ctx, owner); err != nil {
+	if err = s.groupMemberRepo.Create(ctx, owner); err != nil {
 		return nil, err
 	}
 
@@ -73,30 +77,42 @@ func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name, descripti
 		OwnerID: ownerID,
 	})
 
-	return group, nil
+	logger.Infow("CreateGroup: created", "component", "group_service", "group_id", groupID)
+	return res, nil
 }
 
-func (s *GroupService) GetGroup(ctx context.Context, groupID string) (*entity.Group, error) {
-	group, err := s.groupRepo.GetByID(ctx, groupID)
+func (s *GroupService) GetGroup(ctx context.Context, groupID string) (res *entity.Group, err error) {
+	done := logger.StartStep("GroupService.GetGroup", "group_id", groupID)
+	defer func() { done(err) }()
+
+	res, err = s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
-		return nil, ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
-	return group, nil
+	logger.Infow("GetGroup: found", "component", "group_service", "group_id", res.ID)
+	return
 }
 
-func (s *GroupService) UpdateGroup(ctx context.Context, groupID, ownerID, name, description, imageURL string) error {
-	group, err := s.groupRepo.GetByID(ctx, groupID)
+func (s *GroupService) UpdateGroup(ctx context.Context, groupID, ownerID, name, description, imageURL string) (err error) {
+	done := logger.StartStep("GroupService.UpdateGroup", "group_id", groupID, "owner", ownerID)
+	defer func() { done(err) }()
+
+	var group *entity.Group
+	group, err = s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
-		return ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
 
 	if !group.IsOwner(ownerID) {
-		return ErrNotOwner
+		err = ErrNotOwner
+		return
 	}
 
 	group.Update(name, description, imageURL)
-	if err := s.groupRepo.Update(ctx, group); err != nil {
-		return err
+	if err = s.groupRepo.Update(ctx, group); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.GroupUpdatedEvent{
@@ -109,21 +125,28 @@ func (s *GroupService) UpdateGroup(ctx context.Context, groupID, ownerID, name, 
 		Name:    group.Name,
 	})
 
-	return nil
+	logger.Infow("UpdateGroup: updated", "component", "group_service", "group_id", groupID)
+	return
 }
 
-func (s *GroupService) DeleteGroup(ctx context.Context, groupID, ownerID string) error {
-	group, err := s.groupRepo.GetByID(ctx, groupID)
+func (s *GroupService) DeleteGroup(ctx context.Context, groupID, ownerID string) (err error) {
+	done := logger.StartStep("GroupService.DeleteGroup", "group_id", groupID, "owner", ownerID)
+	defer func() { done(err) }()
+
+	var group *entity.Group
+	group, err = s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
-		return ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
 
 	if !group.IsOwner(ownerID) {
-		return ErrNotOwner
+		err = ErrNotOwner
+		return
 	}
 
-	if err := s.groupRepo.Delete(ctx, groupID); err != nil {
-		return err
+	if err = s.groupRepo.Delete(ctx, groupID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.GroupDeletedEvent{
@@ -136,31 +159,39 @@ func (s *GroupService) DeleteGroup(ctx context.Context, groupID, ownerID string)
 		OwnerID: ownerID,
 	})
 
-	return nil
+	logger.Infow("DeleteGroup: deleted", "component", "group_service", "group_id", groupID)
+	return
 }
 
-func (s *GroupService) JoinGroup(ctx context.Context, userID, groupID, reason string) error {
-	isMember, err := s.groupMemberRepo.Exists(ctx, groupID, userID)
+func (s *GroupService) JoinGroup(ctx context.Context, userID, groupID, reason string) (err error) {
+	done := logger.StartStep("GroupService.JoinGroup", "user", userID, "group", groupID)
+	defer func() { done(err) }()
+
+	var isMember bool
+	isMember, err = s.groupMemberRepo.Exists(ctx, groupID, userID)
 	if err != nil {
-		return err
+		return
 	}
 	if isMember {
-		return ErrAlreadyMember
+		err = ErrAlreadyMember
+		return
 	}
 
-	requestExists, err := s.groupJoinRequestRepo.Exists(ctx, userID, groupID)
+	var requestExists bool
+	requestExists, err = s.groupJoinRequestRepo.Exists(ctx, userID, groupID)
 	if err != nil {
-		return err
+		return
 	}
 	if requestExists {
-		return ErrRequestExists
+		err = ErrRequestExists
+		return
 	}
 
 	requestID := s.idGenerator.Generate()
 	request := entity.NewGroupJoinRequest(requestID, userID, groupID, reason)
 
-	if err := s.groupJoinRequestRepo.Create(ctx, request); err != nil {
-		return err
+	if err = s.groupJoinRequestRepo.Create(ctx, request); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.JoinRequestCreatedEvent{
@@ -174,21 +205,28 @@ func (s *GroupService) JoinGroup(ctx context.Context, userID, groupID, reason st
 		GroupID:   groupID,
 	})
 
-	return nil
+	logger.Infow("JoinGroup: join request created", "component", "group_service", "request_id", requestID)
+	return
 }
 
-func (s *GroupService) LeaveGroup(ctx context.Context, userID, groupID string) error {
-	member, err := s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, userID)
+func (s *GroupService) LeaveGroup(ctx context.Context, userID, groupID string) (err error) {
+	done := logger.StartStep("GroupService.LeaveGroup", "user", userID, "group", groupID)
+	defer func() { done(err) }()
+
+	var member *entity.GroupMember
+	member, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, userID)
 	if err != nil {
-		return ErrNotMember
+		err = ErrNotMember
+		return
 	}
 
 	if member.IsOwner() {
-		return ErrCannotLeaveAsOwner
+		err = ErrCannotLeaveAsOwner
+		return
 	}
 
-	if err := s.groupMemberRepo.Delete(ctx, groupID, userID); err != nil {
-		return err
+	if err = s.groupMemberRepo.Delete(ctx, groupID, userID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.MemberLeftEvent{
@@ -201,36 +239,46 @@ func (s *GroupService) LeaveGroup(ctx context.Context, userID, groupID string) e
 		UserID:  userID,
 	})
 
-	return nil
+	logger.Infow("LeaveGroup: user left group", "component", "group_service", "group_id", groupID, "user", userID)
+	return
 }
 
-func (s *GroupService) AcceptJoinRequest(ctx context.Context, requestID, ownerID string) error {
-	request, err := s.groupJoinRequestRepo.GetByID(ctx, requestID)
+func (s *GroupService) AcceptJoinRequest(ctx context.Context, requestID, ownerID string) (err error) {
+	done := logger.StartStep("GroupService.AcceptJoinRequest", "request_id", requestID, "owner", ownerID)
+	defer func() { done(err) }()
+
+	var request *entity.GroupJoinRequest
+	request, err = s.groupJoinRequestRepo.GetByID(ctx, requestID)
 	if err != nil {
-		return ErrRequestNotFound
+		err = ErrRequestNotFound
+		return
 	}
 
-	group, err := s.groupRepo.GetByID(ctx, request.GroupID)
+	var group *entity.Group
+	group, err = s.groupRepo.GetByID(ctx, request.GroupID)
 	if err != nil {
-		return ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
 
 	if !group.IsOwner(ownerID) {
-		return ErrNotOwner
+		err = ErrNotOwner
+		return
 	}
 
 	if !request.IsPending() {
-		return ErrRequestNotFound
+		err = ErrRequestNotFound
+		return
 	}
 
 	member := entity.NewGroupMember(request.GroupID, request.UserID, entity.MemberRoleMember)
-	if err := s.groupMemberRepo.Create(ctx, member); err != nil {
-		return err
+	if err = s.groupMemberRepo.Create(ctx, member); err != nil {
+		return
 	}
 
 	request.Accept()
-	if err := s.groupJoinRequestRepo.UpdateStatus(ctx, requestID, entity.RequestStatusAccepted); err != nil {
-		return err
+	if err = s.groupJoinRequestRepo.UpdateStatus(ctx, requestID, entity.RequestStatusAccepted); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.JoinRequestAcceptedEvent{
@@ -244,31 +292,41 @@ func (s *GroupService) AcceptJoinRequest(ctx context.Context, requestID, ownerID
 		GroupID:   request.GroupID,
 	})
 
-	return nil
+	logger.Infow("AcceptJoinRequest: accepted", "component", "group_service", "request_id", requestID)
+	return
 }
 
-func (s *GroupService) RejectJoinRequest(ctx context.Context, requestID, ownerID string) error {
-	request, err := s.groupJoinRequestRepo.GetByID(ctx, requestID)
+func (s *GroupService) RejectJoinRequest(ctx context.Context, requestID, ownerID string) (err error) {
+	done := logger.StartStep("GroupService.RejectJoinRequest", "request_id", requestID, "owner", ownerID)
+	defer func() { done(err) }()
+
+	var request *entity.GroupJoinRequest
+	request, err = s.groupJoinRequestRepo.GetByID(ctx, requestID)
 	if err != nil {
-		return ErrRequestNotFound
+		err = ErrRequestNotFound
+		return
 	}
 
-	group, err := s.groupRepo.GetByID(ctx, request.GroupID)
+	var group *entity.Group
+	group, err = s.groupRepo.GetByID(ctx, request.GroupID)
 	if err != nil {
-		return ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
 
 	if !group.IsOwner(ownerID) {
-		return ErrNotOwner
+		err = ErrNotOwner
+		return
 	}
 
 	if !request.IsPending() {
-		return ErrRequestNotFound
+		err = ErrRequestNotFound
+		return
 	}
 
 	request.Reject()
-	if err := s.groupJoinRequestRepo.UpdateStatus(ctx, requestID, entity.RequestStatusRejected); err != nil {
-		return err
+	if err = s.groupJoinRequestRepo.UpdateStatus(ctx, requestID, entity.RequestStatusRejected); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.JoinRequestRejectedEvent{
@@ -282,34 +340,51 @@ func (s *GroupService) RejectJoinRequest(ctx context.Context, requestID, ownerID
 		GroupID:   request.GroupID,
 	})
 
-	return nil
+	logger.Infow("RejectJoinRequest: rejected", "component", "group_service", "request_id", requestID)
+	return
 }
 
-func (s *GroupService) GetMembers(ctx context.Context, groupID string) ([]*entity.GroupMember, error) {
-	return s.groupMemberRepo.GetByGroupID(ctx, groupID)
+func (s *GroupService) GetMembers(ctx context.Context, groupID string) (res []*entity.GroupMember, err error) {
+	done := logger.StartStep("GroupService.GetMembers", "group_id", groupID)
+	defer func() { done(err) }()
+
+	res, err = s.groupMemberRepo.GetByGroupID(ctx, groupID)
+	if err == nil {
+		logger.Infow("GetMembers: retrieved", "component", "group_service", "group_id", groupID, "count", len(res))
+	}
+	return
 }
 
-func (s *GroupService) RemoveMember(ctx context.Context, groupID, ownerID, memberID string) error {
-	group, err := s.groupRepo.GetByID(ctx, groupID)
+func (s *GroupService) RemoveMember(ctx context.Context, groupID, ownerID, memberID string) (err error) {
+	done := logger.StartStep("GroupService.RemoveMember", "group_id", groupID, "owner", ownerID, "member", memberID)
+	defer func() { done(err) }()
+
+	var group *entity.Group
+	group, err = s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
-		return ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
 
 	if !group.IsOwner(ownerID) {
-		return ErrNotOwner
+		err = ErrNotOwner
+		return
 	}
 
-	member, err := s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, memberID)
+	var member *entity.GroupMember
+	member, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, memberID)
 	if err != nil {
-		return ErrNotMember
+		err = ErrNotMember
+		return
 	}
 
 	if member.IsOwner() {
-		return ErrCannotRemoveOwner
+		err = ErrCannotRemoveOwner
+		return
 	}
 
-	if err := s.groupMemberRepo.Delete(ctx, groupID, memberID); err != nil {
-		return err
+	if err = s.groupMemberRepo.Delete(ctx, groupID, memberID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.MemberRemovedEvent{
@@ -323,35 +398,60 @@ func (s *GroupService) RemoveMember(ctx context.Context, groupID, ownerID, membe
 		OwnerID: ownerID,
 	})
 
-	return nil
+	logger.Infow("RemoveMember: removed", "component", "group_service", "group_id", groupID, "member", memberID)
+	return
 }
 
-func (s *GroupService) GetUserGroups(ctx context.Context, userID string) ([]*entity.Group, error) {
-	return s.groupRepo.GetByUserID(ctx, userID)
+func (s *GroupService) GetUserGroups(ctx context.Context, userID string) (res []*entity.Group, err error) {
+	done := logger.StartStep("GroupService.GetUserGroups", "user_id", userID)
+	defer func() { done(err) }()
+
+	res, err = s.groupRepo.GetByUserID(ctx, userID)
+	if err == nil {
+		logger.Infow("GetUserGroups: retrieved", "component", "group_service", "user_id", userID, "count", len(res))
+	}
+	return
 }
 
-func (s *GroupService) GetPendingRequests(ctx context.Context, groupID string) ([]*entity.GroupJoinRequest, error) {
-	return s.groupJoinRequestRepo.GetPendingByGroupID(ctx, groupID)
+func (s *GroupService) GetPendingRequests(ctx context.Context, groupID string) (res []*entity.GroupJoinRequest, err error) {
+	done := logger.StartStep("GroupService.GetPendingRequests", "group_id", groupID)
+	defer func() { done(err) }()
+
+	res, err = s.groupJoinRequestRepo.GetPendingByGroupID(ctx, groupID)
+	if err == nil {
+		logger.Infow("GetPendingRequests: retrieved", "component", "group_service", "group_id", groupID, "count", len(res))
+	}
+	return
 }
 
-func (s *GroupService) TransferOwner(ctx context.Context, groupID, ownerID, newOwnerID string) error {
-	group, err := s.groupRepo.GetByID(ctx, groupID)
+func (s *GroupService) TransferOwner(ctx context.Context, groupID, ownerID, newOwnerID string) (err error) {
+	done := logger.StartStep("GroupService.TransferOwner", "group_id", groupID, "old_owner", ownerID, "new_owner", newOwnerID)
+	defer func() { done(err) }()
+
+	var group *entity.Group
+	group, err = s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
-		return ErrGroupNotFound
+		err = ErrGroupNotFound
+		return
 	}
 
 	if !group.IsOwner(ownerID) {
-		return ErrNotOwner
+		err = ErrNotOwner
+		return
 	}
 
-	newOwner, err := s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, newOwnerID)
+	var newOwner *entity.GroupMember
+	newOwner, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, newOwnerID)
 	if err != nil {
-		return ErrNotMember
+		err = ErrNotMember
+		return
 	}
 
-	oldOwner, err := s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, ownerID)
+	var oldOwner *entity.GroupMember
+	oldOwner, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, ownerID)
 	if err != nil {
-		return ErrNotMember
+		err = ErrNotMember
+		return
 	}
 
 	oldOwner.SetRole(entity.MemberRoleMember)
@@ -360,8 +460,8 @@ func (s *GroupService) TransferOwner(ctx context.Context, groupID, ownerID, newO
 	group.OwnerID = newOwnerID
 	group.UpdatedAt = time.Now()
 
-	if err := s.groupRepo.Update(ctx, group); err != nil {
-		return err
+	if err = s.groupRepo.Update(ctx, group); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.OwnerTransferredEvent{
@@ -375,5 +475,6 @@ func (s *GroupService) TransferOwner(ctx context.Context, groupID, ownerID, newO
 		NewOwnerID: newOwnerID,
 	})
 
-	return nil
+	logger.Infow("TransferOwner: transferred", "component", "group_service", "group_id", groupID, "old_owner", ownerID, "new_owner", newOwnerID)
+	return
 }

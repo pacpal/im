@@ -39,7 +39,7 @@ func main() {
 
 	registry, err := discovery.NewRegistry(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
-		logger.Fatalf("Failed to create registry: %v", err)
+		logger.Fatalw("Failed to create registry", "component", "group_cmd", "err", err)
 	}
 	defer registry.Close()
 
@@ -48,13 +48,13 @@ func main() {
 
 	serviceAddr := cfg.Server.Host + ":" + cfg.Server.GRPCPort
 	if err := registry.Register(ctx, cfg.Server.Name, serviceAddr, cfg.Etcd.TTL); err != nil {
-		logger.Fatalf("Failed to register service: %v", err)
+		logger.Fatalw("Failed to register service", "component", "group_cmd", "err", err)
 	}
-	logger.Infof("Service %s registered at %s", cfg.Server.Name, serviceAddr)
+	logger.Infow("Service registered", "component", "group_cmd", "service", cfg.Server.Name, "addr", serviceAddr)
 
 	db, err := persistence.NewPostgresDB(cfg.Database)
 	if err != nil {
-		logger.Fatalf("Failed to connect to database: %v", err)
+		logger.Fatalw("Failed to connect to database", "component", "group_cmd", "err", err)
 	}
 	defer db.Close()
 
@@ -69,7 +69,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
 	if err != nil {
-		logger.Fatalf("Failed to listen: %v", err)
+		logger.Fatalw("Failed to listen", "component", "group_cmd", "err", err)
 	}
 
 	jwtSecret := []byte(cfg.JWT.Secret)
@@ -87,9 +87,9 @@ func main() {
 	healthServer.SetServingStatus(cfg.Server.Name, healthpb.HealthCheckResponse_SERVING)
 
 	go func() {
-		logger.Infof("gRPC server starting on :%s", cfg.Server.GRPCPort)
+		logger.Infow("gRPC server starting", "component", "group_cmd", "grpc_port", cfg.Server.GRPCPort)
 		if err := grpcServer.Serve(lis); err != nil {
-			logger.Fatalf("Failed to serve: %v", err)
+			logger.Fatalw("Failed to serve", "component", "group_cmd", "err", err)
 		}
 	}()
 
@@ -97,14 +97,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info("Shutting down server...")
+	logger.Infow("Shutting down server...", "component", "group_cmd")
 	grpcServer.GracefulStop()
 
 	if err := registry.Deregister(ctx, cfg.Server.Name, serviceAddr); err != nil {
-		logger.Errorf("Failed to deregister service: %v", err)
+		logger.Errorw("Failed to deregister service", "component", "group_cmd", "err", err)
 	}
 
-	logger.Info("Server stopped")
+	logger.Infow("Server stopped", "component", "group_cmd")
 }
 
 // getConfigPath 返回 group 服务配置文件路径，优先使用环境变量 CONFIG_PATH。

@@ -40,7 +40,7 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			h.clients[client.userID] = client
 			h.mu.Unlock()
-			logger.Infof("User %s connected", client.userID)
+			logger.Infow("User connected", "component", "gateway_ws", "user", client.userID)
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -49,7 +49,7 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 			h.mu.Unlock()
-			logger.Infof("User %s disconnected", client.userID)
+			logger.Infow("User disconnected", "component", "gateway_ws", "user", client.userID)
 
 		case message := <-h.broadcast:
 			h.mu.RLock()

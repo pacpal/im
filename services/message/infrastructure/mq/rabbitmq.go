@@ -2,6 +2,7 @@
 package mq
 
 import (
+	"IM/pkg/logger"
 	"IM/services/message/domain/entity"
 	"context"
 	"encoding/json"
@@ -18,19 +19,25 @@ type RabbitMQConnection struct {
 }
 
 // NewRabbitMQConnection 连接到 RabbitMQ 并返回包装对象。
-func NewRabbitMQConnection(url string) (*RabbitMQConnection, error) {
+func NewRabbitMQConnection(url string) (res *RabbitMQConnection, err error) {
+	done := logger.StartStep("mq.NewRabbitMQConnection", "url", url)
+	defer func() { done(err) }()
+
 	conn, err := amqp091.Dial(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+		err = fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+		return
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
-		return nil, fmt.Errorf("failed to open channel: %w", err)
+		err = fmt.Errorf("failed to open channel: %w", err)
+		return
 	}
 
-	return &RabbitMQConnection{conn: conn, ch: ch}, nil
+	res = &RabbitMQConnection{conn: conn, ch: ch}
+	return
 }
 
 // Close 关闭通道与连接。

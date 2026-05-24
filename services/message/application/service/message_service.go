@@ -3,6 +3,7 @@ package service
 
 import (
 	"IM/pkg/id"
+	"IM/pkg/logger"
 	"IM/services/message/domain/entity"
 	"IM/services/message/domain/event"
 	"IM/services/message/domain/repository"
@@ -48,18 +49,23 @@ func NewMessageService(
 	}
 }
 
-func (s *MessageService) SendMessage(ctx context.Context, senderID, receiverID, content, msgType string) (*entity.Message, error) {
-	messageID := s.idGenerator.Generate()
-	message := entity.NewMessage(messageID, senderID, receiverID, content, entity.MessageType(msgType))
+func (s *MessageService) SendMessage(ctx context.Context, senderID, receiverID, content, msgType string) (res *entity.Message, err error) {
+	done := logger.StartStep("MessageService.SendMessage", "sender", senderID, "receiver", receiverID)
+	defer func() { done(err) }()
 
-	if err := s.messageRepo.Create(ctx, message); err != nil {
+	messageID := s.idGenerator.Generate()
+	res = entity.NewMessage(messageID, senderID, receiverID, content, entity.MessageType(msgType))
+
+	if err = s.messageRepo.Create(ctx, res); err != nil {
 		return nil, err
 	}
 
-	if err := s.messageCache.IncrUnreadCount(ctx, receiverID); err != nil {
+	if e := s.messageCache.IncrUnreadCount(ctx, receiverID); e != nil {
+		logger.Warnw("SendMessage: incr unread failed", "component", "message_service", "err", e, "receiver", receiverID)
 	}
 
-	if err := s.messageProducer.PublishMessage(ctx, message); err != nil {
+	if e := s.messageProducer.PublishMessage(ctx, res); e != nil {
+		logger.Warnw("SendMessage: publish message failed", "component", "message_service", "err", e, "msg_id", messageID)
 	}
 
 	s.eventPublisher.Publish(&event.MessageSentEvent{
@@ -74,40 +80,60 @@ func (s *MessageService) SendMessage(ctx context.Context, senderID, receiverID, 
 		MsgType:    msgType,
 	})
 
-	return message, nil
+	logger.Infow("SendMessage: sent", "component", "message_service", "msg_id", messageID)
+	return res, nil
 }
 
-func (s *MessageService) GetMessage(ctx context.Context, messageID string) (*entity.Message, error) {
-	return s.messageRepo.GetByID(ctx, messageID)
+func (s *MessageService) GetMessage(ctx context.Context, messageID string) (res *entity.Message, err error) {
+	done := logger.StartStep("MessageService.GetMessage", "msg_id", messageID)
+	defer func() { done(err) }()
+
+	res, err = s.messageRepo.GetByID(ctx, messageID)
+	return
 }
 
-func (s *MessageService) GetOfflineMessages(ctx context.Context, userID string, limit, offset int) ([]*entity.Message, error) {
-	return s.messageRepo.GetByReceiverID(ctx, userID, limit, offset)
+func (s *MessageService) GetOfflineMessages(ctx context.Context, userID string, limit, offset int) (res []*entity.Message, err error) {
+	done := logger.StartStep("MessageService.GetOfflineMessages", "user_id", userID, "limit", limit, "offset", offset)
+	defer func() { done(err) }()
+
+	res, err = s.messageRepo.GetByReceiverID(ctx, userID, limit, offset)
+	return
 }
 
-func (s *MessageService) GetHistoryMessages(ctx context.Context, userID, targetID string, beforeTime int64, limit int) ([]*entity.Message, error) {
-	return s.messageRepo.GetHistory(ctx, userID, targetID, beforeTime, limit)
+func (s *MessageService) GetHistoryMessages(ctx context.Context, userID, targetID string, beforeTime int64, limit int) (res []*entity.Message, err error) {
+	done := logger.StartStep("MessageService.GetHistoryMessages", "user_id", userID, "target", targetID, "limit", limit)
+	defer func() { done(err) }()
+
+	res, err = s.messageRepo.GetHistory(ctx, userID, targetID, beforeTime, limit)
+	return
 }
 
-func (s *MessageService) MarkAsRead(ctx context.Context, messageID, userID string) error {
-	message, err := s.messageRepo.GetByID(ctx, messageID)
+func (s *MessageService) MarkAsRead(ctx context.Context, messageID, userID string) (err error) {
+	done := logger.StartStep("MessageService.MarkAsRead", "msg_id", messageID, "user", userID)
+	defer func() { done(err) }()
+
+	var message *entity.Message
+	message, err = s.messageRepo.GetByID(ctx, messageID)
 	if err != nil {
-		return ErrMessageNotFound
+		err = ErrMessageNotFound
+		return
 	}
 
 	if message.ReceiverID != userID {
-		return errors.New("not message receiver")
+		err = errors.New("not message receiver")
+		return
 	}
 
 	if message.IsRead {
-		return nil
+		return
 	}
 
-	if err := s.messageRepo.MarkAsRead(ctx, messageID); err != nil {
-		return err
+	if err = s.messageRepo.MarkAsRead(ctx, messageID); err != nil {
+		return
 	}
 
-	if err := s.messageCache.DecrUnreadCount(ctx, userID); err != nil {
+	if e := s.messageCache.DecrUnreadCount(ctx, userID); e != nil {
+		logger.Warnw("MarkAsRead: decr unread failed", "component", "message_service", "err", e, "user", userID)
 	}
 
 	s.eventPublisher.Publish(&event.MessageReadEvent{
@@ -120,50 +146,70 @@ func (s *MessageService) MarkAsRead(ctx context.Context, messageID, userID strin
 		UserID:    userID,
 	})
 
-	return nil
+	logger.Infow("MarkAsRead: marked", "component", "message_service", "msg_id", messageID, "user", userID)
+	return
 }
 
-func (s *MessageService) MarkAllAsRead(ctx context.Context, userID, targetID string) error {
-	return s.messageRepo.MarkAllAsRead(ctx, userID, targetID)
+func (s *MessageService) MarkAllAsRead(ctx context.Context, userID, targetID string) (err error) {
+	done := logger.StartStep("MessageService.MarkAllAsRead", "user", userID, "target", targetID)
+	defer func() { done(err) }()
+
+	err = s.messageRepo.MarkAllAsRead(ctx, userID, targetID)
+	return
 }
 
-func (s *MessageService) GetUnreadCount(ctx context.Context, userID string) (int64, error) {
-	count, err := s.messageCache.GetUnreadCount(ctx, userID)
+func (s *MessageService) GetUnreadCount(ctx context.Context, userID string) (count int64, err error) {
+	done := logger.StartStep("MessageService.GetUnreadCount", "user", userID)
+	defer func() { done(err) }()
+
+	count, err = s.messageCache.GetUnreadCount(ctx, userID)
 	if err != nil {
 		return s.messageRepo.GetUnreadCount(ctx, userID)
 	}
-	return count, nil
+	return
 }
 
-func (s *MessageService) GetOnlineStatus(ctx context.Context, userIDs []string) (map[string]bool, error) {
-	onlineUsers, err := s.messageCache.GetOnlineUsers(ctx)
+func (s *MessageService) GetOnlineStatus(ctx context.Context, userIDs []string) (result map[string]bool, err error) {
+	done := logger.StartStep("MessageService.GetOnlineStatus", "count", len(userIDs))
+	defer func() { done(err) }()
+
+	var onlineUsers map[string]bool
+	onlineUsers, err = s.messageCache.GetOnlineUsers(ctx)
 	if err != nil {
-		return make(map[string]bool), nil
+		result = make(map[string]bool)
+		return
 	}
 
-	result := make(map[string]bool)
+	result = make(map[string]bool)
 	for _, userID := range userIDs {
 		result[userID] = onlineUsers[userID]
 	}
-	return result, nil
+	return
 }
 
-func (s *MessageService) RevokeMessage(ctx context.Context, messageID, userID string) error {
-	message, err := s.messageRepo.GetByID(ctx, messageID)
+func (s *MessageService) RevokeMessage(ctx context.Context, messageID, userID string) (err error) {
+	done := logger.StartStep("MessageService.RevokeMessage", "msg_id", messageID, "user", userID)
+	defer func() { done(err) }()
+
+	var message *entity.Message
+	message, err = s.messageRepo.GetByID(ctx, messageID)
 	if err != nil {
-		return ErrMessageNotFound
+		err = ErrMessageNotFound
+		return
 	}
 
 	if message.SenderID != userID {
-		return ErrNotSender
+		err = ErrNotSender
+		return
 	}
 
 	if message.IsRevoked {
-		return ErrAlreadyRevoked
+		err = ErrAlreadyRevoked
+		return
 	}
 
-	if err := s.messageRepo.Revoke(ctx, messageID); err != nil {
-		return err
+	if err = s.messageRepo.Revoke(ctx, messageID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.MessageRevokedEvent{
@@ -176,12 +222,16 @@ func (s *MessageService) RevokeMessage(ctx context.Context, messageID, userID st
 		UserID:    userID,
 	})
 
-	return nil
+	logger.Infow("RevokeMessage: revoked", "component", "message_service", "msg_id", messageID)
+	return
 }
 
-func (s *MessageService) SetUserOnline(ctx context.Context, userID string) error {
-	if err := s.messageCache.SetOnlineUser(ctx, userID); err != nil {
-		return err
+func (s *MessageService) SetUserOnline(ctx context.Context, userID string) (err error) {
+	done := logger.StartStep("MessageService.SetUserOnline", "user", userID)
+	defer func() { done(err) }()
+
+	if err = s.messageCache.SetOnlineUser(ctx, userID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.UserOnlineEvent{
@@ -193,12 +243,16 @@ func (s *MessageService) SetUserOnline(ctx context.Context, userID string) error
 		UserID: userID,
 	})
 
-	return nil
+	logger.Infow("SetUserOnline: set", "component", "message_service", "user", userID)
+	return
 }
 
-func (s *MessageService) SetUserOffline(ctx context.Context, userID string) error {
-	if err := s.messageCache.RemoveOnlineUser(ctx, userID); err != nil {
-		return err
+func (s *MessageService) SetUserOffline(ctx context.Context, userID string) (err error) {
+	done := logger.StartStep("MessageService.SetUserOffline", "user", userID)
+	defer func() { done(err) }()
+
+	if err = s.messageCache.RemoveOnlineUser(ctx, userID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.UserOfflineEvent{
@@ -210,5 +264,6 @@ func (s *MessageService) SetUserOffline(ctx context.Context, userID string) erro
 		UserID: userID,
 	})
 
-	return nil
+	logger.Infow("SetUserOffline: removed", "component", "message_service", "user", userID)
+	return
 }

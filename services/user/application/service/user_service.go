@@ -61,24 +61,30 @@ func NewUserService(
 	}
 }
 
-func (s *UserService) Register(ctx context.Context, tele, name, password string) (*entity.User, error) {
-	exists, err := s.userRepo.ExistsByTele(ctx, tele)
+func (s *UserService) Register(ctx context.Context, tele, name, password string) (res *entity.User, err error) {
+	done := logger.StartStep("UserService.Register", "tele", tele)
+	defer func() { done(err) }()
+
+	var exists bool
+	exists, err = s.userRepo.ExistsByTele(ctx, tele)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
-		return nil, ErrUserAlreadyExists
+		err = ErrUserAlreadyExists
+		return nil, err
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	var hashedPassword []byte
+	hashedPassword, err = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
 	userID := s.idGenerator.Generate()
-	user := entity.NewUser(userID, name, tele, string(hashedPassword))
+	res = entity.NewUser(userID, name, tele, string(hashedPassword))
 
-	if err := s.userRepo.Create(ctx, user); err != nil {
+	if err = s.userRepo.Create(ctx, res); err != nil {
 		return nil, err
 	}
 
@@ -86,80 +92,113 @@ func (s *UserService) Register(ctx context.Context, tele, name, password string)
 		BaseEvent: event.BaseEvent{
 			EventType:   "user.registered",
 			OccurredAt:  time.Now(),
-			AggregateID: user.ID,
+			AggregateID: res.ID,
 		},
-		UserID: user.ID,
-		Name:   user.Name,
-		Tele:   user.Tele,
+		UserID: res.ID,
+		Name:   res.Name,
+		Tele:   res.Tele,
 	})
 
-	return user, nil
+	logger.Infow("Register: user created", "component", "user_service", "user_id", res.ID)
+	return res, nil
 }
 
-func (s *UserService) Login(ctx context.Context, tele, id, password string) (*entity.User, string, error) {
-	var user *entity.User
-	var err error
+func (s *UserService) Login(ctx context.Context, tele, id, password string) (res *entity.User, token string, err error) {
+	done := logger.StartStep("UserService.Login", "tele", tele, "id", id)
+	defer func() { done(err) }()
 
 	if tele != "" {
-		user, err = s.userRepo.GetByTele(ctx, tele)
+		res, err = s.userRepo.GetByTele(ctx, tele)
 	} else if id != "" {
-		user, err = s.userRepo.GetByID(ctx, id)
+		res, err = s.userRepo.GetByID(ctx, id)
 	} else {
-		return nil, "", ErrUserNotFound
+		err = ErrUserNotFound
+		return
 	}
 	if err != nil {
-		return nil, "", ErrUserNotFound
+		err = ErrUserNotFound
+		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, "", ErrInvalidPassword
+	if e := bcrypt.CompareHashAndPassword([]byte(res.Password), []byte(password)); e != nil {
+		err = ErrInvalidPassword
+		return
 	}
 
-	token, err := s.jwtUtil.GenerateToken(user.ID, user.Name)
+	token, err = s.jwtUtil.GenerateToken(res.ID, res.Name)
 	if err != nil {
-		return nil, "", err
+		return
 	}
 
 	s.eventPublisher.Publish(&event.UserLoggedInEvent{
 		BaseEvent: event.BaseEvent{
 			EventType:   "user.logged_in",
 			OccurredAt:  time.Now(),
-			AggregateID: user.ID,
+			AggregateID: res.ID,
 		},
-		UserID: user.ID,
-		Tele:   user.Tele,
+		UserID: res.ID,
+		Tele:   res.Tele,
 	})
 
-	return user, token, nil
+	logger.Infow("Login: user logged in", "component", "user_service", "user_id", res.ID)
+	return
 }
 
-func (s *UserService) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
-	user, err := s.userRepo.GetByID(ctx, id)
+func (s *UserService) GetUserByID(ctx context.Context, id string) (res *entity.User, err error) {
+	done := logger.StartStep("UserService.GetUserByID", "id", id)
+	defer func() { done(err) }()
+
+	res, err = s.userRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, ErrUserNotFound
+		err = ErrUserNotFound
+		return
 	}
-	return user, nil
+	logger.Infow("GetUserByID: found", "component", "user_service", "user_id", res.ID)
+	return
 }
 
-func (s *UserService) GetUserByTele(ctx context.Context, tele string) (*entity.User, error) {
-	user, err := s.userRepo.GetByTele(ctx, tele)
+func (s *UserService) GetUserByTele(ctx context.Context, tele string) (res *entity.User, err error) {
+	done := logger.StartStep("UserService.GetUserByTele", "tele", tele)
+	defer func() { done(err) }()
+
+	res, err = s.userRepo.GetByTele(ctx, tele)
 	if err != nil {
-		return nil, ErrUserNotFound
+		err = ErrUserNotFound
+		return
 	}
-	return user, nil
+	logger.Infow("GetUserByTele: found", "component", "user_service", "user_id", res.ID)
+	return
 }
 
-func (s *UserService) GetUsersByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
-	return s.userRepo.GetByIDs(ctx, ids)
+func (s *UserService) GetUsersByIDs(ctx context.Context, ids []string) (res []*entity.User, err error) {
+	done := logger.StartStep("UserService.GetUsersByIDs", "count", len(ids))
+	defer func() { done(err) }()
+
+	res, err = s.userRepo.GetByIDs(ctx, ids)
+	return
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, user *entity.User) error {
+func (s *UserService) UpdateUser(ctx context.Context, user *entity.User) (err error) {
+	done := logger.StartStep("UserService.UpdateUser", "user_id", user.ID)
+	defer func() { done(err) }()
+
 	user.UpdatedAt = time.Now()
-	return s.userRepo.Update(ctx, user)
+	err = s.userRepo.Update(ctx, user)
+	if err == nil {
+		logger.Infow("UpdateUser: updated", "component", "user_service", "user_id", user.ID)
+	}
+	return
 }
 
-func (s *UserService) GetFriends(ctx context.Context, userID string) ([]*entity.User, error) {
-	return s.friendshipRepo.GetFriends(ctx, userID)
+func (s *UserService) GetFriends(ctx context.Context, userID string) (res []*entity.User, err error) {
+	done := logger.StartStep("UserService.GetFriends", "user_id", userID)
+	defer func() { done(err) }()
+
+	res, err = s.friendshipRepo.GetFriends(ctx, userID)
+	if err == nil {
+		logger.Infow("GetFriends: retrieved", "component", "user_service", "user_id", userID, "count", len(res))
+	}
+	return
 }
 
 func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason string) error {
@@ -224,33 +263,40 @@ func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason stri
 	return nil
 }
 
-func (s *UserService) AcceptFriendRequest(ctx context.Context, requestID, acceptorID string) error {
-	req, err := s.friendRequestRepo.GetByID(ctx, requestID)
+func (s *UserService) AcceptFriendRequest(ctx context.Context, requestID, acceptorID string) (err error) {
+	done := logger.StartStep("UserService.AcceptFriendRequest", "request_id", requestID, "acceptor", acceptorID)
+	defer func() { done(err) }()
+
+	var req *entity.FriendRequest
+	req, err = s.friendRequestRepo.GetByID(ctx, requestID)
 	if err != nil {
-		return ErrRequestNotFound
+		err = ErrRequestNotFound
+		return
 	}
 
 	if req.ToUID != acceptorID {
-		return ErrInvalidRequest
+		err = ErrInvalidRequest
+		return
 	}
 
 	if !req.IsPending() {
-		return ErrInvalidRequest
+		err = ErrInvalidRequest
+		return
 	}
 
 	friendship1 := entity.NewFriendship(req.FromUID, req.ToUID)
 	friendship2 := entity.NewFriendship(req.ToUID, req.FromUID)
 
-	if err := s.friendshipRepo.Create(ctx, friendship1); err != nil {
-		return err
+	if err = s.friendshipRepo.Create(ctx, friendship1); err != nil {
+		return
 	}
-	if err := s.friendshipRepo.Create(ctx, friendship2); err != nil {
-		return err
+	if err = s.friendshipRepo.Create(ctx, friendship2); err != nil {
+		return
 	}
 
 	req.Accept()
-	if err := s.friendRequestRepo.UpdateStatus(ctx, requestID, entity.FriendRequestStatusAccepted); err != nil {
-		return err
+	if err = s.friendRequestRepo.UpdateStatus(ctx, requestID, entity.FriendRequestStatusAccepted); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.FriendRequestAcceptedEvent{
@@ -264,26 +310,34 @@ func (s *UserService) AcceptFriendRequest(ctx context.Context, requestID, accept
 		ToUID:     req.ToUID,
 	})
 
-	return nil
+	logger.Infow("AcceptFriendRequest: accepted", "component", "user_service", "request_id", requestID, "from", req.FromUID, "to", req.ToUID)
+	return
 }
 
-func (s *UserService) RejectFriendRequest(ctx context.Context, requestID, rejecterID string) error {
-	req, err := s.friendRequestRepo.GetByID(ctx, requestID)
+func (s *UserService) RejectFriendRequest(ctx context.Context, requestID, rejecterID string) (err error) {
+	done := logger.StartStep("UserService.RejectFriendRequest", "request_id", requestID, "rejecter", rejecterID)
+	defer func() { done(err) }()
+
+	var req *entity.FriendRequest
+	req, err = s.friendRequestRepo.GetByID(ctx, requestID)
 	if err != nil {
-		return ErrRequestNotFound
+		err = ErrRequestNotFound
+		return
 	}
 
 	if req.ToUID != rejecterID {
-		return ErrInvalidRequest
+		err = ErrInvalidRequest
+		return
 	}
 
 	if !req.IsPending() {
-		return ErrInvalidRequest
+		err = ErrInvalidRequest
+		return
 	}
 
 	req.Reject()
-	if err := s.friendRequestRepo.UpdateStatus(ctx, requestID, entity.FriendRequestStatusRejected); err != nil {
-		return err
+	if err = s.friendRequestRepo.UpdateStatus(ctx, requestID, entity.FriendRequestStatusRejected); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.FriendRequestRejectedEvent{
@@ -297,19 +351,30 @@ func (s *UserService) RejectFriendRequest(ctx context.Context, requestID, reject
 		ToUID:     req.ToUID,
 	})
 
-	return nil
+	logger.Infow("RejectFriendRequest: rejected", "component", "user_service", "request_id", requestID, "from", req.FromUID, "to", req.ToUID)
+	return
 }
 
-func (s *UserService) GetPendingFriendRequests(ctx context.Context, uid string) ([]*entity.FriendRequest, error) {
-	return s.friendRequestRepo.GetPendingRequests(ctx, uid)
-}
+func (s *UserService) GetPendingFriendRequests(ctx context.Context, uid string) (res []*entity.FriendRequest, err error) {
+	done := logger.StartStep("UserService.GetPendingFriendRequests", "user_id", uid)
+	defer func() { done(err) }()
 
-func (s *UserService) RemoveFriend(ctx context.Context, userID, friendID string) error {
-	if err := s.friendshipRepo.Delete(ctx, userID, friendID); err != nil {
-		return err
+	res, err = s.friendRequestRepo.GetPendingRequests(ctx, uid)
+	if err == nil {
+		logger.Infow("GetPendingFriendRequests: retrieved", "component", "user_service", "user_id", uid, "count", len(res))
 	}
-	if err := s.friendshipRepo.Delete(ctx, friendID, userID); err != nil {
-		return err
+	return
+}
+
+func (s *UserService) RemoveFriend(ctx context.Context, userID, friendID string) (err error) {
+	done := logger.StartStep("UserService.RemoveFriend", "user_id", userID, "friend_id", friendID)
+	defer func() { done(err) }()
+
+	if err = s.friendshipRepo.Delete(ctx, userID, friendID); err != nil {
+		return
+	}
+	if err = s.friendshipRepo.Delete(ctx, friendID, userID); err != nil {
+		return
 	}
 
 	s.eventPublisher.Publish(&event.FriendshipDeletedEvent{
@@ -322,9 +387,17 @@ func (s *UserService) RemoveFriend(ctx context.Context, userID, friendID string)
 		FriendID: friendID,
 	})
 
-	return nil
+	logger.Infow("RemoveFriend: removed", "component", "user_service", "user_id", userID, "friend_id", friendID)
+	return
 }
 
-func (s *UserService) CheckFriendship(ctx context.Context, userID1, userID2 string) (bool, error) {
-	return s.friendshipRepo.Exists(ctx, userID1, userID2)
+func (s *UserService) CheckFriendship(ctx context.Context, userID1, userID2 string) (ok bool, err error) {
+	done := logger.StartStep("UserService.CheckFriendship", "user1", userID1, "user2", userID2)
+	defer func() { done(err) }()
+
+	ok, err = s.friendshipRepo.Exists(ctx, userID1, userID2)
+	if err == nil {
+		logger.Infow("CheckFriendship: result", "component", "user_service", "user1", userID1, "user2", userID2, "ok", ok)
+	}
+	return
 }

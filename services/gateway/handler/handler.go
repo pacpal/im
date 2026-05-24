@@ -76,9 +76,9 @@ func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 		if t, ok := c.Get("token"); ok {
 			if ts, ok2 := t.(string); ok2 {
 				if len(ts) > 8 {
-					logger.Infof("Forwarding token prefix=%s len=%d", ts[:8], len(ts))
+					logger.Infow("Forwarding token", "component", "gateway_handler", "prefix", ts[:8], "len", len(ts))
 				} else {
-					logger.Infof("Forwarding token len=%d", len(ts))
+					logger.Infow("Forwarding token", "component", "gateway_handler", "len", len(ts))
 				}
 				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
 			}

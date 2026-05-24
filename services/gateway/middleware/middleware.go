@@ -34,9 +34,9 @@ func Auth(jwtUtil *auth.JWTUtil) gin.HandlerFunc {
 
 		userID, err := jwtUtil.ParseToken(parts[1])
 		if err != nil {
-			logger.Warnw("HTTP Auth invalid token",
+			logger.Warnw("HTTP Auth error token",
 				"component", "http_auth", "method", c.Request.Method, "path", c.Request.URL.Path, "ip", c.ClientIP(), "error", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "error token"})
 			c.Abort()
 			return
 		}

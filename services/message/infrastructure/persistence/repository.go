@@ -3,6 +3,7 @@ package persistence
 
 import (
 	"IM/pkg/config"
+	zlog "IM/pkg/logger"
 	"IM/services/message/domain/entity"
 	"context"
 	"fmt"
@@ -20,20 +21,25 @@ type MongoDB struct {
 }
 
 // NewMongoDB 根据配置创建 MongoDB 连接。
-func NewMongoDB(cfg config.MongoDBConfig) (*MongoDB, error) {
+func NewMongoDB(cfg config.MongoDBConfig) (res *MongoDB, err error) {
+	done := zlog.StartStep("persistence.NewMongoDB", "uri", cfg.URI, "db", cfg.Database)
+	defer func() { done(err) }()
+
 	client, err := mongo.Connect(options.Client().ApplyURI(cfg.URI))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
+		err = fmt.Errorf("failed to connect to MongoDB: %w", err)
+		return
 	}
 
 	database := client.Database(cfg.Database)
 	collection := database.Collection(cfg.Collection)
 
-	return &MongoDB{
+	res = &MongoDB{
 		client:     client,
 		database:   database,
 		collection: collection,
-	}, nil
+	}
+	return
 }
 
 // Close 断开 MongoDB 连接。
