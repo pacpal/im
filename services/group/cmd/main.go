@@ -11,8 +11,10 @@ import (
 	"IM/services/group/application/service"
 	"IM/services/group/domain/event"
 	"IM/services/group/infrastructure/persistence"
+	"IM/services/group/infrastructure/persistence/model"
 	grpcserver "IM/services/group/interfaces/grpc"
 	"context"
+
 	"fmt"
 	"net"
 	"os"
@@ -57,6 +59,10 @@ func main() {
 		logger.Fatalw("Failed to connect to database", "component", "group_cmd", "err", err)
 	}
 	defer db.Close()
+
+	if err := db.GetDB().AutoMigrate(&model.Group{}, &model.GroupMember{}, &model.GroupJoinRequest{}); err != nil {
+		logger.Fatalw("Failed to auto migrate database", "component", "group_cmd", "err", err)
+	}
 
 	idGenerator := id.NewSnowflakeGenerator(2)
 

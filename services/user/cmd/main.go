@@ -13,6 +13,7 @@ import (
 	"IM/services/user/domain/event"
 	"IM/services/user/infrastructure/cache"
 	"IM/services/user/infrastructure/persistence"
+	"IM/services/user/infrastructure/persistence/model"
 	grpcserver "IM/services/user/interfaces/grpc"
 	"context"
 	"fmt"
@@ -60,6 +61,10 @@ func main() {
 		logger.Fatalw("Failed to connect to database", "component", "user_cmd", "err", err)
 	}
 	defer db.Close()
+
+	if err := db.GetDB().AutoMigrate(&model.User{}, &model.Friendship{}, &model.FriendRequest{}); err != nil {
+		logger.Fatalw("Failed to auto migrate database", "component", "user_cmd", "err", err)
+	}
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Host + ":" + cfg.Redis.Port,

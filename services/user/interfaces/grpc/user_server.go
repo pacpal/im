@@ -111,7 +111,7 @@ func (s *UserServer) RemoveFriend(ctx context.Context, req *user.RemoveFriendReq
 	}, nil
 }
 
-func (s *UserServer) ReplyFriendRequest(ctx context.Context, req *user.ReplyFriendRequest) (*common.Response, error) {
+func (s *UserServer) ReplyFriend(ctx context.Context, req *user.ReplyFriendRequest) (*common.Response, error) {
 	var err error
 	if req.GetAccept() {
 		err = s.userSvc.AcceptFriendRequest(ctx, req.RequestId, req.UserId)

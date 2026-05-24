@@ -8,10 +8,7 @@ import (
 	"IM/services/gateway/proxy"
 	"net/http"
 
-	"IM/pkg/logger"
-
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc/metadata"
 )
 
 // Register 处理用户注册请求并转发到用户服务。
@@ -24,11 +21,6 @@ func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().Register(ctx, &req)
 		if err != nil {
@@ -51,11 +43,6 @@ func Login(p *proxy.ServiceProxy, jwtUtil interface{}) gin.HandlerFunc {
 		}
 
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().Login(ctx, &req)
 		if err != nil {
@@ -73,16 +60,6 @@ func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				if len(ts) > 8 {
-					logger.Infow("Forwarding token", "component", "gateway_handler", "prefix", ts[:8], "len", len(ts))
-				} else {
-					logger.Infow("Forwarding token", "component", "gateway_handler", "len", len(ts))
-				}
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().GetUser(ctx, &user.GetUserRequest{UserId: userID})
 		if err != nil {
@@ -99,11 +76,6 @@ func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().GetFriends(ctx, &user.GetFriendsRequest{UserId: userID})
 		if err != nil {
@@ -129,11 +101,6 @@ func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().AddFriend(ctx, &user.AddFriendRequest{
 			UserId:   userID.(string),
@@ -163,11 +130,6 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().ReplyFriend(ctx, &user.ReplyFriendRequest{
 			UserId:    userID.(string),
@@ -188,11 +150,6 @@ func GetPendingFriendRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.UserClient().GetPendingFriendRequests(ctx, &user.GetPendingFriendRequestsRequest{UserId: userID.(string)})
 		if err != nil {
@@ -218,11 +175,6 @@ func CreateGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().CreateGroup(ctx, &group.CreateGroupRequest{
 			OwnerId:     userID.(string),
@@ -243,11 +195,6 @@ func GetGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().GetGroup(ctx, &group.GetGroupRequest{GroupId: groupID})
 		if err != nil {
@@ -264,11 +211,6 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().GetMembers(ctx, &group.GetMembersRequest{GroupId: groupID})
 		if err != nil {
@@ -285,11 +227,6 @@ func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().GetUserGroups(ctx, &group.GetUserGroupsRequest{UserId: userID})
 		if err != nil {
@@ -315,11 +252,6 @@ func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().JoinGroup(ctx, &group.JoinGroupRequest{
 			UserId:  userID.(string),
@@ -348,11 +280,6 @@ func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 		}
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().ReplyGroupJoin(ctx, &group.ReplyGroupJoinRequest{
 			OwnerId:   userID.(string),
@@ -375,11 +302,6 @@ func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 		userID, _ := c.Get("user_id")
 
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.GroupClient().LeaveGroup(ctx, &group.LeaveGroupRequest{
 			UserId:  userID.(string),
@@ -409,11 +331,6 @@ func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.MessageClient().SendMessage(ctx, &message.SendMessageRequest{
 			SenderId:   userID.(string),
@@ -435,11 +352,6 @@ func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.MessageClient().GetOfflineMessages(ctx, &message.GetOfflineMessagesRequest{
 			UserId: userID.(string),
@@ -461,11 +373,6 @@ func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 		msgID := c.Param("id")
 
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.MessageClient().MarkAsRead(ctx, &message.MarkAsReadRequest{
 			MsgId: msgID,
@@ -484,11 +391,6 @@ func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.MessageClient().MarkAllAsRead(ctx, &message.MarkAllAsReadRequest{
 			UserId: userID.(string),
@@ -507,11 +409,6 @@ func GetUnreadCount(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
-		if t, ok := c.Get("token"); ok {
-			if ts, ok2 := t.(string); ok2 {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+ts)
-			}
-		}
 
 		resp, err := p.MessageClient().GetUnreadCount(ctx, &message.GetUnreadCountRequest{UserId: userID.(string)})
 		if err != nil {
