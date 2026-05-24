@@ -87,11 +87,8 @@ func main() {
 		logger.Fatalw("Failed to listen", "component", "message_cmd", "err", err)
 	}
 
-	jwtSecret := []byte(cfg.JWT.Secret)
-	skipMethods := []string{}
-
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.AuthUnaryInterceptor(jwtSecret, skipMethods)),
+		grpc.UnaryInterceptor(interceptor.LoggingUnaryInterceptor()),
 	)
 
 	messageServer := grpcserver.NewMessageServer(messageService)

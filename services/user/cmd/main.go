@@ -84,11 +84,8 @@ func main() {
 		logger.Fatalw("Failed to listen", "component", "user_cmd", "err", err)
 	}
 
-	jwtSecret := []byte(cfg.JWT.Secret)
-	skipMethods := []string{"/user.UserService/Register", "/user.UserService/Login"}
-
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.AuthUnaryInterceptor(jwtSecret, skipMethods)),
+		grpc.UnaryInterceptor(interceptor.LoggingUnaryInterceptor()),
 	)
 
 	userServer := grpcserver.NewUserServer(userService)

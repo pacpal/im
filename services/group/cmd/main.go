@@ -72,11 +72,8 @@ func main() {
 		logger.Fatalw("Failed to listen", "component", "group_cmd", "err", err)
 	}
 
-	jwtSecret := []byte(cfg.JWT.Secret)
-	skipMethods := []string{"/group.GroupService/CreateGroup", "/group.GroupService/GetGroup"}
-
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.AuthUnaryInterceptor(jwtSecret, skipMethods)),
+		grpc.UnaryInterceptor(interceptor.LoggingUnaryInterceptor()),
 	)
 
 	groupServer := grpcserver.NewGroupServer(groupService)
