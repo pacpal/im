@@ -44,4 +44,4 @@ websocket:
 
 log:
   level: info
-  format: json
+  format: console

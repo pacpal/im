@@ -28,4 +28,4 @@ redis:
 
 log:
   level: info
-  format: json
+  format: console

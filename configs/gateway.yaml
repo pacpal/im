@@ -31,4 +31,4 @@ jwt:
 
 log:
   level: info
-  format: json
+  format: console

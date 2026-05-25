@@ -78,17 +78,18 @@ func main() {
 		protected.Use(middleware.Auth(jwtUtil))
 		{
 			protected.GET("/users/:id", handler.GetUser(serviceProxy))
-			protected.GET("/users/:id/friends", handler.GetFriends(serviceProxy))
+			protected.GET("/users/friends", handler.GetFriends(serviceProxy))
 			protected.POST("/users/friends", handler.AddFriend(serviceProxy))
-			protected.POST("/users/friend-requests/accept", handler.AcceptFriendRequest(serviceProxy))
-			protected.GET("/users/friend-requests", handler.GetPendingFriendRequests(serviceProxy))
+			protected.POST("/users/friend_requests/accept", handler.AcceptFriendRequest(serviceProxy))
+			protected.GET("/users/friend_requests", handler.GetPendingFriendRequests(serviceProxy))
 
 			protected.POST("/groups", handler.CreateGroup(serviceProxy))
 			protected.GET("/groups/:id", handler.GetGroup(serviceProxy))
 			protected.GET("/groups/:id/members", handler.GetGroupMembers(serviceProxy))
-			protected.GET("/users/:id/groups", handler.GetUserGroups(serviceProxy))
+			protected.GET("/users/groups", handler.GetUserGroups(serviceProxy))
 			protected.POST("/groups/join", handler.JoinGroup(serviceProxy))
-			protected.POST("/groups/join/accept", handler.AcceptGroupJoinRequest(serviceProxy))
+			protected.GET("/groups/join/requests", handler.GetPendingGroupJoinRequests(serviceProxy))
+			protected.GET("/groups/join/accept", handler.AcceptGroupJoinRequest(serviceProxy))
 			protected.DELETE("/groups/:id/leave", handler.LeaveGroup(serviceProxy))
 
 			protected.POST("/messages", handler.SendMessage(serviceProxy))

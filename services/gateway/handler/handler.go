@@ -74,10 +74,10 @@ func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 // GetFriends 获取用户好友列表。
 func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.Param("id")
+		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.UserClient().GetFriends(ctx, &user.GetFriendsRequest{UserId: userID})
+		resp, err := p.UserClient().GetFriends(ctx, &user.GetFriendsRequest{UserId: userID.(string)})
 		if err != nil {
 			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -225,10 +225,10 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 // GetUserGroups 获取用户加入的群组列表。
 func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.Param("id")
+		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().GetUserGroups(ctx, &group.GetUserGroupsRequest{UserId: userID})
+		resp, err := p.GroupClient().GetUserGroups(ctx, &group.GetUserGroupsRequest{UserId: userID.(string)})
 		if err != nil {
 			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -257,6 +257,31 @@ func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 			UserId:  userID.(string),
 			GroupId: req.GroupID,
 			Reason:  req.Reason,
+		})
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, resp)
+	}
+}
+func GetPendingGroupJoinRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			GroupID string `json:"group_id"`
+		}
+		err := c.ShouldBindJSON(&req)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		userID, _ := c.Get("user_id")
+		ctx := c.Request.Context()
+
+		resp, err := p.GroupClient().GetPendingGroupRequests(ctx, &group.GetPendingGroupRequestsRequest{
+			OwnerId: userID.(string),
+			GroupId: req.GroupID,
 		})
 		if err != nil {
 			c.Error(err)

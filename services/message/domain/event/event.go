@@ -30,6 +30,7 @@ func (e *BaseEvent) GetAggregateID() string {
 }
 
 // 具体事件类型。
+
 type MessageSentEvent struct {
 	BaseEvent
 	MessageID  string
