@@ -52,10 +52,33 @@ func main() {
 	jwtUtil := auth.NewJWTUtil(cfg.JWT.Secret, cfg.JWT.Expire)
 	// 初始化服务代理
 	serviceProxy := proxy.NewServiceProxy(resolver, cfg)
+
+	// 初始化 WebSocket Hub
 	hub := ws.NewHub()
 	go hub.Run()
+	defer hub.Stop()
+
 	// 初始化 WebSocket 处理器
 	wsHandler := ws.NewHandler(hub, jwtUtil, redisClient)
+
+	// 初始化消息消费者（从 RabbitMQ 拉取消息推送给在线用户）
+	var msgConsumer *ws.MessageConsumer
+	if cfg.RabbitMQ.URL != "" {
+		queueName := cfg.RabbitMQ.QueuePrefix + "gateway"
+		msgConsumer, err = ws.NewMessageConsumer(hub, cfg.RabbitMQ.URL, cfg.RabbitMQ.Exchange, queueName)
+		if err != nil {
+			logger.Warnw("Failed to create message consumer, messages will not be pushed via WebSocket", "component", "gateway_cmd", "err", err)
+		} else {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if err := msgConsumer.Start(ctx); err != nil {
+				logger.Warnw("Failed to start message consumer", "component", "gateway_cmd", "err", err)
+			} else {
+				logger.Infow("Message consumer started", "component", "gateway_cmd", "queue", queueName)
+			}
+			defer msgConsumer.Close()
+		}
+	}
 
 	// 初始化路由
 	router := gin.Default()
@@ -66,8 +89,9 @@ func main() {
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"status":  "healthy",
-			"service": "gateway",
+			"status":       "healthy",
+			"service":      "gateway",
+			"online_users": hub.OnlineCount(),
 		})
 	})
 	// API 路由表
@@ -101,7 +125,8 @@ func main() {
 			protected.GET("/messages/unread/count", handler.GetUnreadCount(serviceProxy))
 		}
 	}
-	// WebSocket
+
+	// WebSocket连接
 	router.GET("/ws", func(c *gin.Context) {
 		wsHandler.HandleWebSocket(c.Writer, c.Request)
 	})

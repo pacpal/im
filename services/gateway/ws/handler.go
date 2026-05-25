@@ -1,9 +1,10 @@
-// Package ws 提供 WebSocket 处理器，用于升级连接并将客户端注册到 Hub。
+// Package ws 提供 WebSocket 处理器，用于升级连接、认证、心跳及消息读写泵。
 package ws
 
 import (
 	"IM/pkg/auth"
 	"IM/pkg/logger"
+	"context"
 	"net/http"
 	"time"
 
@@ -18,6 +19,11 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
+}
+
+// websocketConn 是对 *websocket.Conn 的简单包装，避免在 Hub 中使用 interface{}。
+type websocketConn struct {
+	*websocket.Conn
 }
 
 // Handler 负责处理 WebSocket 协议升级、认证与 Client 的注册。
@@ -56,9 +62,17 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 设置在线状态到 Redis
+	ctx := r.Context()
+	if h.redis != nil {
+		if err := h.redis.SAdd(ctx, "online_users", userID).Err(); err != nil {
+			logger.Warnw("Failed to set online status", "component", "gateway_ws", "user", userID, "err", err)
+		}
+	}
+
 	client := &Client{
 		hub:    h.hub,
-		conn:   conn,
+		conn:   &websocketConn{conn},
 		send:   make(chan []byte, 256),
 		userID: userID,
 	}
@@ -66,58 +80,70 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	h.hub.RegisterClient(client)
 
 	go client.writePump()
-	go client.readPump()
+	go client.readPump(h.redis)
 }
 
 // readPump 从 WebSocket 连接读取消息并在断开时注销客户端。
-func (c *Client) readPump() {
+func (c *Client) readPump(redisClient *redis.Client) {
 	defer func() {
 		c.hub.UnregisterClient(c)
+		if redisClient != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			// 如果该用户没有其它连接，再从 Redis 移除
+			if !c.hub.IsOnline(c.userID) {
+				if err := redisClient.SRem(ctx, "online_users", c.userID).Err(); err != nil {
+					logger.Warnw("Failed to remove online status", "component", "gateway_ws", "user", c.userID, "err", err)
+				}
+			}
+		}
 	}()
 
-	conn := c.conn.(*websocket.Conn)
-	conn.SetReadLimit(65536)
-	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.conn.SetReadLimit(65536)
+	c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.conn.SetPongHandler(func(string) error {
+		c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
 
 	for {
-		_, message, err := conn.ReadMessage()
+		_, message, err := c.conn.ReadMessage()
 		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				logger.Warnw("WebSocket unexpected close", "component", "gateway_ws", "user", c.userID, "err", err)
+			}
 			break
 		}
 
 		logger.Infow("Received WS message", "component", "gateway_ws", "user", c.userID, "message", string(message))
+		// TODO: 根据业务解析消息并处理（如心跳 ack、发送消息等）
 	}
 }
 
-// writePump 负责按心跳向客户端发送 Ping，并将 Hub 广播的消息写入连接。
+// writePump 负责按心跳向客户端发送 Ping，并将 Hub 下发的消息写入连接。
 func (c *Client) writePump() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer func() {
 		ticker.Stop()
-		conn := c.conn.(*websocket.Conn)
-		conn.Close()
+		c.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.send:
-			conn := c.conn.(*websocket.Conn)
-			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
-				conn.WriteMessage(websocket.CloseMessage, []byte{})
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			w, err := conn.NextWriter(websocket.TextMessage)
+			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return
 			}
 			w.Write(message)
 
+			// 合并待发送的后续消息
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				w.Write([]byte{'\n'})
@@ -129,9 +155,8 @@ func (c *Client) writePump() {
 			}
 
 		case <-ticker.C:
-			conn := c.conn.(*websocket.Conn)
-			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}

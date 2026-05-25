@@ -72,6 +72,7 @@ type GatewayConfig struct {
 	Etcd     EtcdConfig     `yaml:"etcd"`
 	Services ServicesConfig `yaml:"services"`
 	Redis    RedisConfig    `yaml:"redis"`
+	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
 	JWT      JWTConfig      `yaml:"jwt"`
 	Log      LogConfig      `yaml:"log"`
 }
@@ -336,6 +337,11 @@ func DefaultGatewayConfig() *GatewayConfig {
 		Redis: RedisConfig{
 			Host: "localhost",
 			Port: "6379",
+		},
+		RabbitMQ: RabbitMQConfig{
+			URL:         "amqp://guest:guest@localhost:5672/",
+			Exchange:    "im_exchange",
+			QueuePrefix: "im_",
 		},
 		JWT: JWTConfig{
 			Secret: "your-secret-key",
