@@ -9,7 +9,7 @@ import (
 	"IM/pkg/id"
 	"IM/pkg/interceptor"
 	"IM/pkg/logger"
-	"IM/services/user/application/service"
+	service "IM/services/user/application"
 	"IM/services/user/domain/event"
 	"IM/services/user/infrastructure/cache"
 	"IM/services/user/infrastructure/persistence"

@@ -3,7 +3,7 @@ package grpc
 import (
 	"IM/api/gen/common"
 	"IM/api/gen/user"
-	"IM/services/user/application/service"
+	service "IM/services/user/application"
 	"context"
 )
 

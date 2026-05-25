@@ -23,41 +23,43 @@ import (
 )
 
 func main() {
+	// 加载配置
 	cfg, err := config.LoadGatewayConfig(getConfigPath())
 	if err != nil {
 		fmt.Printf("Using default config: %v\n", err)
 		cfg = config.DefaultGatewayConfig()
 	}
-
+	// 初始化日志
 	if err := logger.Init(cfg.Log.Level, cfg.Log.Format); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to init logger: %v\n", err)
 		os.Exit(1)
 	}
 	defer logger.Sync()
-
+	// 初始化服务发现
 	resolver, err := discovery.NewResolver(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
 		logger.Fatalw("Failed to create resolver", "component", "gateway_cmd", "err", err)
 	}
 	defer resolver.Close()
-
+	// 初始化 Redis 客户端
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Host + ":" + cfg.Redis.Port,
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.DB,
 	})
 	defer redisClient.Close()
-
+	// 初始化 JWT 工具
 	jwtUtil := auth.NewJWTUtil(cfg.JWT.Secret, cfg.JWT.Expire)
-
+	// 初始化服务代理
 	serviceProxy := proxy.NewServiceProxy(resolver, cfg)
 	hub := ws.NewHub()
 	go hub.Run()
-
+	// 初始化 WebSocket 处理器
 	wsHandler := ws.NewHandler(hub, jwtUtil, redisClient)
 
+	// 初始化路由
 	router := gin.Default()
-
+	// 初始化中间件
 	router.Use(middleware.CORS())
 	router.Use(middleware.Logging())
 	router.Use(middleware.Recovery())
@@ -68,12 +70,12 @@ func main() {
 			"service": "gateway",
 		})
 	})
-
+	// API 路由表
 	api := router.Group("/api/v1")
 	{
 		api.POST("/auth/register", handler.Register(serviceProxy))
 		api.POST("/auth/login", handler.Login(serviceProxy, jwtUtil))
-
+		// 受保护路由
 		protected := api.Group("")
 		protected.Use(middleware.Auth(jwtUtil))
 		{
@@ -99,7 +101,7 @@ func main() {
 			protected.GET("/messages/unread/count", handler.GetUnreadCount(serviceProxy))
 		}
 	}
-
+	// WebSocket
 	router.GET("/ws", func(c *gin.Context) {
 		wsHandler.HandleWebSocket(c.Writer, c.Request)
 	})
