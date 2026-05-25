@@ -27,24 +27,27 @@ import (
 )
 
 func main() {
+	// 加载配置
 	cfg, err := config.LoadMessageConfig(getConfigPath())
 	if err != nil {
 		fmt.Printf("Using default config: %v\n", err)
 		cfg = config.DefaultMessageConfig()
 	}
-
+	// 初始化日志
 	if err := logger.Init(cfg.Log.Level, cfg.Log.Format); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to init logger: %v\n", err)
 		os.Exit(1)
 	}
 	defer logger.Sync()
 
+	// 初始化 etcd 注册中心
 	registry, err := discovery.NewRegistry(cfg.Etcd.Endpoints, cfg.Etcd.DialTimeout)
 	if err != nil {
 		logger.Fatalw("Failed to create registry", "component", "message_cmd", "err", err)
 	}
 	defer registry.Close()
 
+	// 注册服务到 etcd
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -54,12 +57,14 @@ func main() {
 	}
 	logger.Infow("Service registered", "component", "message_cmd", "service", cfg.Server.Name, "addr", serviceAddr)
 
+	// 初始化 MongoDB 连接
 	mongoDB, err := persistence.NewMongoDB(cfg.Database.MongoDB)
 	if err != nil {
 		logger.Fatalw("Failed to connect to MongoDB", "component", "message_cmd", "err", err)
 	}
 	defer mongoDB.Close()
 
+	// 初始化 Redis 连接
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Host + ":" + cfg.Redis.Port,
 		Password: cfg.Redis.Password,
@@ -67,6 +72,7 @@ func main() {
 	})
 	defer redisClient.Close()
 
+	// 初始化 RabbitMQ 连接
 	rabbitMQ, err := mq.NewRabbitMQConnection(cfg.RabbitMQ.URL)
 	if err != nil {
 		logger.Fatalw("Failed to connect to RabbitMQ", "component", "message_cmd", "err", err)
@@ -75,18 +81,19 @@ func main() {
 
 	idGenerator := id.NewSnowflakeGenerator(3)
 
+	// 初始化消息仓库
 	messageRepo := persistence.NewMessageRepository(mongoDB)
 	messageCache := persistence.NewMessageCache(redisClient)
 	messageProducer := mq.NewMessageProducer(rabbitMQ, cfg.RabbitMQ.Exchange)
-
+	// 初始化事件发布器
 	eventPublisher := event.NewEventPublisher()
 	messageService := service.NewMessageService(messageRepo, messageCache, messageProducer, idGenerator, eventPublisher)
 
+	// 初始化 gRPC 服务器
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
 	if err != nil {
 		logger.Fatalw("Failed to listen", "component", "message_cmd", "err", err)
 	}
-
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptor.LoggingUnaryInterceptor()),
 	)
