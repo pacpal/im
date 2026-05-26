@@ -106,6 +106,7 @@ func main() {
 			protected.GET("/users/:id", handler.GetUser(serviceProxy))
 			protected.GET("/users/friends", handler.GetFriends(serviceProxy))
 			protected.POST("/users/friends", handler.AddFriend(serviceProxy))
+			protected.DELETE("/users/friends/:friend_id", handler.RemoveFriend(serviceProxy))
 			protected.POST("/users/friend_requests/accept", handler.AcceptFriendRequest(serviceProxy))
 			protected.GET("/users/friend_requests", handler.GetPendingFriendRequests(serviceProxy))
 

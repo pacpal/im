@@ -116,6 +116,30 @@ func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
+func RemoveFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			FriendID string `json:"friend_id"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+		userID, _ := c.Get("user_id")
+		ctx := c.Request.Context()
+
+		resp, err := p.UserClient().RemoveFriend(ctx, &user.RemoveFriendRequest{
+			UserId:   userID.(string),
+			TargetId: req.FriendID,
+		})
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
 // AcceptFriendRequest 接受或拒绝好友请求。
 func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
