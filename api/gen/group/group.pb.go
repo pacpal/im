@@ -1259,7 +1259,7 @@ const file_group_group_proto_rawDesc = "" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x19\n" +
 	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12 \n" +
 	"\fnew_owner_id\x18\x03 \x01(\tR\n" +
-	"newOwnerId2\xae\x06\n" +
+	"newOwnerId2\xad\x06\n" +
 	"\fGroupService\x12D\n" +
 	"\vCreateGroup\x12\x19.group.CreateGroupRequest\x1a\x1a.group.CreateGroupResponse\x124\n" +
 	"\bGetGroup\x12\x16.group.GetGroupRequest\x1a\x10.group.GroupInfo\x12:\n" +
@@ -1267,8 +1267,8 @@ const file_group_group_proto_rawDesc = "" +
 	"\vDeleteGroup\x12\x19.group.DeleteGroupRequest\x1a\x10.common.Response\x126\n" +
 	"\tJoinGroup\x12\x17.group.JoinGroupRequest\x1a\x10.common.Response\x128\n" +
 	"\n" +
-	"LeaveGroup\x12\x18.group.LeaveGroupRequest\x1a\x10.common.Response\x12A\n" +
-	"\x0fReplyGroupJoins\x12\x1c.group.ReplyGroupJoinRequest\x1a\x10.common.Response\x12A\n" +
+	"LeaveGroup\x12\x18.group.LeaveGroupRequest\x1a\x10.common.Response\x12@\n" +
+	"\x0eReplyGroupJoin\x12\x1c.group.ReplyGroupJoinRequest\x1a\x10.common.Response\x12A\n" +
 	"\n" +
 	"GetMembers\x12\x18.group.GetMembersRequest\x1a\x19.group.GetMembersResponse\x12<\n" +
 	"\fRemoveMember\x12\x1a.group.RemoveMemberRequest\x1a\x10.common.Response\x12J\n" +
@@ -1321,7 +1321,7 @@ var file_group_group_proto_depIdxs = []int32{
 	5,  // 6: group.GroupService.DeleteGroup:input_type -> group.DeleteGroupRequest
 	6,  // 7: group.GroupService.JoinGroup:input_type -> group.JoinGroupRequest
 	7,  // 8: group.GroupService.LeaveGroup:input_type -> group.LeaveGroupRequest
-	8,  // 9: group.GroupService.ReplyGroupJoins:input_type -> group.ReplyGroupJoinRequest
+	8,  // 9: group.GroupService.ReplyGroupJoin:input_type -> group.ReplyGroupJoinRequest
 	9,  // 10: group.GroupService.GetMembers:input_type -> group.GetMembersRequest
 	12, // 11: group.GroupService.RemoveMember:input_type -> group.RemoveMemberRequest
 	13, // 12: group.GroupService.GetUserGroups:input_type -> group.GetUserGroupsRequest
@@ -1333,7 +1333,7 @@ var file_group_group_proto_depIdxs = []int32{
 	19, // 18: group.GroupService.DeleteGroup:output_type -> common.Response
 	19, // 19: group.GroupService.JoinGroup:output_type -> common.Response
 	19, // 20: group.GroupService.LeaveGroup:output_type -> common.Response
-	19, // 21: group.GroupService.ReplyGroupJoins:output_type -> common.Response
+	19, // 21: group.GroupService.ReplyGroupJoin:output_type -> common.Response
 	11, // 22: group.GroupService.GetMembers:output_type -> group.GetMembersResponse
 	19, // 23: group.GroupService.RemoveMember:output_type -> common.Response
 	14, // 24: group.GroupService.GetUserGroups:output_type -> group.GetUserGroupsResponse

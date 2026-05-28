@@ -127,7 +127,7 @@ service GroupService {
     rpc DeleteGroup(DeleteGroupRequest) returns (common.Response);
     rpc JoinGroup(JoinGroupRequest) returns (common.Response);
     rpc LeaveGroup(LeaveGroupRequest) returns (common.Response);
-    rpc ReplyGroupJoins(ReplyGroupJoinRequest) returns (common.Response);
+    rpc ReplyGroupJoin(ReplyGroupJoinRequest) returns (common.Response);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
     rpc RemoveMember(RemoveMemberRequest) returns (common.Response);
     rpc GetUserGroups(GetUserGroupsRequest) returns (GetUserGroupsResponse);
