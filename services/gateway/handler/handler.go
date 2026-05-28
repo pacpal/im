@@ -330,8 +330,8 @@ func GetPendingGroupJoinRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
-// AcceptGroupJoinRequest 群主接受或拒绝加入群组的请求。
-func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
+// ReplyGroupJoinRequest 群主接受或拒绝加入群组的请求。
+func ReplyGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
 			GroupID string `json:"group_id"`
@@ -344,7 +344,7 @@ func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().ReplyGroupJoins(ctx, &group.ReplyGroupJoinRequest{
+		resp, err := p.GroupClient().ReplyGroupJoin(ctx, &group.ReplyGroupJoinRequest{
 			OwnerId:   userID.(string),
 			RequestId: req.GroupID,
 			Accept:    req.Accept,

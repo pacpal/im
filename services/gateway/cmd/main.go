@@ -117,7 +117,7 @@ func main() {
 			protected.GET("/users/groups", handler.GetUserGroups(serviceProxy))
 			protected.POST("/groups/join", handler.JoinGroup(serviceProxy))
 			protected.GET("/groups/join/requests", handler.GetPendingGroupJoinRequests(serviceProxy))
-			protected.GET("/groups/join/accept", handler.AcceptGroupJoinRequest(serviceProxy))
+			protected.GET("/groups/join/accept", handler.ReplyGroupJoinRequest(serviceProxy))
 			protected.DELETE("/groups/:id/leave", handler.LeaveGroup(serviceProxy))
 
 			protected.POST("/messages", handler.SendMessage(serviceProxy))
