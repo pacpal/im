@@ -26,7 +26,7 @@ const (
 	GroupService_DeleteGroup_FullMethodName             = "/group.GroupService/DeleteGroup"
 	GroupService_JoinGroup_FullMethodName               = "/group.GroupService/JoinGroup"
 	GroupService_LeaveGroup_FullMethodName              = "/group.GroupService/LeaveGroup"
-	GroupService_ReplyGroupJoin_FullMethodName          = "/group.GroupService/ReplyGroupJoin"
+	GroupService_ReplyGroupJoins_FullMethodName         = "/group.GroupService/ReplyGroupJoins"
 	GroupService_GetMembers_FullMethodName              = "/group.GroupService/GetMembers"
 	GroupService_RemoveMember_FullMethodName            = "/group.GroupService/RemoveMember"
 	GroupService_GetUserGroups_FullMethodName           = "/group.GroupService/GetUserGroups"
@@ -44,7 +44,7 @@ type GroupServiceClient interface {
 	DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*common.Response, error)
 	JoinGroup(ctx context.Context, in *JoinGroupRequest, opts ...grpc.CallOption) (*common.Response, error)
 	LeaveGroup(ctx context.Context, in *LeaveGroupRequest, opts ...grpc.CallOption) (*common.Response, error)
-	ReplyGroupJoin(ctx context.Context, in *ReplyGroupJoinRequest, opts ...grpc.CallOption) (*common.Response, error)
+	ReplyGroupJoins(ctx context.Context, in *ReplyGroupJoinRequest, opts ...grpc.CallOption) (*common.Response, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
 	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*common.Response, error)
 	GetUserGroups(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GetUserGroupsResponse, error)
@@ -120,10 +120,10 @@ func (c *groupServiceClient) LeaveGroup(ctx context.Context, in *LeaveGroupReque
 	return out, nil
 }
 
-func (c *groupServiceClient) ReplyGroupJoin(ctx context.Context, in *ReplyGroupJoinRequest, opts ...grpc.CallOption) (*common.Response, error) {
+func (c *groupServiceClient) ReplyGroupJoins(ctx context.Context, in *ReplyGroupJoinRequest, opts ...grpc.CallOption) (*common.Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.Response)
-	err := c.cc.Invoke(ctx, GroupService_ReplyGroupJoin_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, GroupService_ReplyGroupJoins_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ type GroupServiceServer interface {
 	DeleteGroup(context.Context, *DeleteGroupRequest) (*common.Response, error)
 	JoinGroup(context.Context, *JoinGroupRequest) (*common.Response, error)
 	LeaveGroup(context.Context, *LeaveGroupRequest) (*common.Response, error)
-	ReplyGroupJoin(context.Context, *ReplyGroupJoinRequest) (*common.Response, error)
+	ReplyGroupJoins(context.Context, *ReplyGroupJoinRequest) (*common.Response, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
 	RemoveMember(context.Context, *RemoveMemberRequest) (*common.Response, error)
 	GetUserGroups(context.Context, *GetUserGroupsRequest) (*GetUserGroupsResponse, error)
@@ -224,8 +224,8 @@ func (UnimplementedGroupServiceServer) JoinGroup(context.Context, *JoinGroupRequ
 func (UnimplementedGroupServiceServer) LeaveGroup(context.Context, *LeaveGroupRequest) (*common.Response, error) {
 	return nil, status.Error(codes.Unimplemented, "method LeaveGroup not implemented")
 }
-func (UnimplementedGroupServiceServer) ReplyGroupJoin(context.Context, *ReplyGroupJoinRequest) (*common.Response, error) {
-	return nil, status.Error(codes.Unimplemented, "method ReplyGroupJoin not implemented")
+func (UnimplementedGroupServiceServer) ReplyGroupJoins(context.Context, *ReplyGroupJoinRequest) (*common.Response, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReplyGroupJoins not implemented")
 }
 func (UnimplementedGroupServiceServer) GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMembers not implemented")
@@ -371,20 +371,20 @@ func _GroupService_LeaveGroup_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GroupService_ReplyGroupJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _GroupService_ReplyGroupJoins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReplyGroupJoinRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupServiceServer).ReplyGroupJoin(ctx, in)
+		return srv.(GroupServiceServer).ReplyGroupJoins(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupService_ReplyGroupJoin_FullMethodName,
+		FullMethod: GroupService_ReplyGroupJoins_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServiceServer).ReplyGroupJoin(ctx, req.(*ReplyGroupJoinRequest))
+		return srv.(GroupServiceServer).ReplyGroupJoins(ctx, req.(*ReplyGroupJoinRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -511,8 +511,8 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GroupService_LeaveGroup_Handler,
 		},
 		{
-			MethodName: "ReplyGroupJoin",
-			Handler:    _GroupService_ReplyGroupJoin_Handler,
+			MethodName: "ReplyGroupJoins",
+			Handler:    _GroupService_ReplyGroupJoins_Handler,
 		},
 		{
 			MethodName: "GetMembers",

@@ -16,3 +16,9 @@ message Response {
     string message = 2;
     int32 code = 3;
 }
+
+message Request{
+    bool success =1;
+    string messsage =2;
+    int32 code =3;
+}

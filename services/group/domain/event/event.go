@@ -66,7 +66,7 @@ type MemberRemovedEvent struct {
 	BaseEvent
 	GroupID string
 	UserID  string
-	OwnerID string
+	AdminID string
 }
 
 type JoinRequestCreatedEvent struct {

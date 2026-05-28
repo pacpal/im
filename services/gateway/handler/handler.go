@@ -245,6 +245,20 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 		c.JSON(http.StatusOK, resp)
 	}
 }
+func RemoveGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		groupID := c.Param("id")
+		ctx := c.Request.Context()
+
+		resp, err := p.GroupClient().RemoveMember(ctx, &group.RemoveMemberRequest{GroupId: groupID})
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, resp)
+	}
+}
 
 // GetUserGroups 获取用户加入的群组列表。
 func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {

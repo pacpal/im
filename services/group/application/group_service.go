@@ -355,30 +355,24 @@ func (s *GroupService) GetMembers(ctx context.Context, groupID string) (res []*e
 	return
 }
 
-func (s *GroupService) RemoveMember(ctx context.Context, groupID, ownerID, memberID string) (err error) {
-	done := logger.StartStep("GroupService.RemoveMember", "group_id", groupID, "owner", ownerID, "member", memberID)
+func (s *GroupService) RemoveMember(ctx context.Context, groupID, adminID, memberID string) (err error) {
+	done := logger.StartStep("GroupService.RemoveMember", "group_id", groupID, "admin", adminID, "member", memberID)
 	defer func() { done(err) }()
 
-	var group *entity.Group
-	group, err = s.groupRepo.GetByID(ctx, groupID)
+	_, err = s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
 		err = ErrGroupNotFound
 		return
 	}
 
-	if !group.IsOwner(ownerID) {
-		err = ErrNotOwner
-		return
-	}
-
 	var member *entity.GroupMember
-	member, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, memberID)
+	member, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, adminID)
 	if err != nil {
 		err = ErrNotMember
 		return
 	}
 
-	if member.IsOwner() {
+	if member.IsAdmin() {
 		err = ErrCannotRemoveOwner
 		return
 	}
@@ -395,7 +389,7 @@ func (s *GroupService) RemoveMember(ctx context.Context, groupID, ownerID, membe
 		},
 		GroupID: groupID,
 		UserID:  memberID,
-		OwnerID: ownerID,
+		AdminID: adminID,
 	})
 
 	logger.Infow("RemoveMember: removed", "component", "group_service", "group_id", groupID, "member", memberID)
