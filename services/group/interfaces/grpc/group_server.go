@@ -77,7 +77,7 @@ func (s *GroupServer) LeaveGroup(ctx context.Context, req *group.LeaveGroupReque
 	}, nil
 }
 
-func (s *GroupServer) ReplyGroupJoin(ctx context.Context, req *group.ReplyGroupJoinRequest) (*common.Response, error) {
+func (s *GroupServer) ReplyGroupJoins(ctx context.Context, req *group.ReplyGroupJoinRequest) (*common.Response, error) {
 	var err error
 	if req.GetAccept() {
 		err = s.groupSvc.AcceptJoinRequest(ctx, req.GetRequestId(), req.GetOwnerId())

@@ -344,7 +344,7 @@ func AcceptGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().ReplyGroupJoin(ctx, &group.ReplyGroupJoinRequest{
+		resp, err := p.GroupClient().ReplyGroupJoins(ctx, &group.ReplyGroupJoinRequest{
 			OwnerId:   userID.(string),
 			RequestId: req.GroupID,
 			Accept:    req.Accept,
