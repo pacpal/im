@@ -1,4 +1,3 @@
-// Package handler 提供 Gateway 的 HTTP API 处理函数，主要负责参数校验、鉴权转发以及调用后端 gRPC 服务。
 package handler
 
 import (
@@ -10,229 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
-type RegisterRequest struct {
-	Username string `json:"username" example:"testuser"`
-	Password string `json:"password" example:"password123"`
-	Email    string `json:"email" example:"user@example.com"`
-	Nickname string `json:"nickname" example:"Test User"`
-}
-
-type RegisterResponse struct {
-	UserId   string `json:"user_id" example:"123456789"`
-	Username string `json:"username" example:"testuser"`
-	Email    string `json:"email" example:"user@example.com"`
-	Nickname string `json:"nickname" example:"Test User"`
-}
-
-type LoginRequest struct {
-	Username string `json:"username" example:"testuser"`
-	Password string `json:"password" example:"password123"`
-}
-
-type LoginResponse struct {
-	Token    string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-	UserId   string `json:"user_id" example:"123456789"`
-	Username string `json:"username" example:"testuser"`
-}
-
-type UserInfo struct {
-	UserId   string `json:"user_id" example:"123456789"`
-	Username string `json:"username" example:"testuser"`
-	Email    string `json:"email" example:"user@example.com"`
-	Nickname string `json:"nickname" example:"Test User"`
-	Avatar   string `json:"avatar" example:"https://example.com/avatar.jpg"`
-	Status   int32  `json:"status" example:"1"`
-}
-
-type FriendInfo struct {
-	FriendId string `json:"friend_id" example:"123456789"`
-	Username string `json:"username" example:"frienduser"`
-	Nickname string `json:"nickname" example:"My Friend"`
-	Avatar   string `json:"avatar" example:"https://example.com/avatar.jpg"`
-	Status   int32  `json:"status" example:"1"`
-}
-
-type FriendsListResponse struct {
-	Friends []FriendInfo `json:"friends"`
-}
-
-type AddFriendRequest struct {
-	FriendID string `json:"friend_id" example:"123456"`
-	Reason   string `json:"reason" example:"想加你为好友"`
-}
-
-type AddFriendResponse struct {
-	RequestId string `json:"request_id" example:"987654321"`
-	Status    string `json:"status" example:"pending"`
-}
-
-type RemoveFriendResponse struct {
-	Success bool `json:"success" example:"true"`
-}
-
-type ReplyFriendRequestBody struct {
-	Accept bool `json:"accept" example:"true"`
-}
-
-type ReplyFriendResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Status  string `json:"status" example:"accepted"`
-}
-
-type FriendRequestInfo struct {
-	RequestId  string `json:"request_id" example:"987654321"`
-	FromUserId string `json:"from_user_id" example:"123456789"`
-	FromName   string `json:"from_name" example:"sender"`
-	Reason     string `json:"reason" example:"想加你为好友"`
-	Status     string `json:"status" example:"pending"`
-	CreatedAt  string `json:"created_at" example:"2024-01-01T00:00:00Z"`
-}
-
-type FriendRequestsResponse struct {
-	Requests []FriendRequestInfo `json:"requests"`
-}
-
-type CreateGroupRequest struct {
-	Name        string `json:"name" example:"技术交流群"`
-	Description string `json:"description" example:"这是一个技术交流群"`
-}
-
-type CreateGroupResponse struct {
-	GroupId     string `json:"group_id" example:"789012"`
-	Name        string `json:"name" example:"技术交流群"`
-	Description string `json:"description" example:"这是一个技术交流群"`
-	OwnerId     string `json:"owner_id" example:"123456789"`
-}
-
-type GroupInfo struct {
-	GroupId     string `json:"group_id" example:"789012"`
-	Name        string `json:"name" example:"技术交流群"`
-	Description string `json:"description" example:"这是一个技术交流群"`
-	OwnerId     string `json:"owner_id" example:"123456789"`
-	MemberCount int32  `json:"member_count" example:"50"`
-	CreatedAt   string `json:"created_at" example:"2024-01-01T00:00:00Z"`
-}
-
-type GroupMemberInfo struct {
-	MemberId string `json:"member_id" example:"123456789"`
-	Username string `json:"username" example:"member1"`
-	Nickname string `json:"nickname" example:"群成员1"`
-	Role     string `json:"role" example:"member"`
-	JoinedAt string `json:"joined_at" example:"2024-01-01T00:00:00Z"`
-}
-
-type GroupMembersResponse struct {
-	Members []GroupMemberInfo `json:"members"`
-}
-
-type ChangeGroupMemberRequest struct {
-	Role int32 `json:"role" example:"1"`
-}
-
-type ChangeGroupMemberResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Role    string `json:"role" example:"admin"`
-}
-
-type RemoveGroupMemberResponse struct {
-	Success bool `json:"success" example:"true"`
-}
-
-type UserGroupsResponse struct {
-	Groups []GroupInfo `json:"groups"`
-}
-
-type JoinGroupRequest struct {
-	GroupID string `json:"group_id" example:"789012"`
-	Reason  string `json:"reason" example:"想加入群组"`
-}
-
-type JoinGroupResponse struct {
-	RequestId string `json:"request_id" example:"987654321"`
-	Status    string `json:"status" example:"pending"`
-}
-
-type GetPendingGroupJoinRequestsBody struct {
-	GroupID string `json:"group_id" example:"789012"`
-}
-
-type GroupJoinRequestInfo struct {
-	RequestId string `json:"request_id" example:"987654321"`
-	UserId    string `json:"user_id" example:"123456789"`
-	Username  string `json:"username" example:"applicant"`
-	Reason    string `json:"reason" example:"想加入群组"`
-	Status    string `json:"status" example:"pending"`
-	CreatedAt string `json:"created_at" example:"2024-01-01T00:00:00Z"`
-}
-
-type GroupJoinRequestsResponse struct {
-	Requests []GroupJoinRequestInfo `json:"requests"`
-}
-
-type ReplyGroupJoinRequestBody struct {
-	Accept bool `json:"accept" example:"true"`
-}
-
-type ReplyGroupJoinResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Status  string `json:"status" example:"accepted"`
-}
-
-type LeaveGroupResponse struct {
-	Success bool `json:"success" example:"true"`
-}
-
-type SendMessageRequest struct {
-	ReceiverID string `json:"receiver_id" example:"123456"`
-	Content    string `json:"content" example:"你好"`
-	MsgType    string `json:"msg_type" example:"text"`
-}
-
-type SendMessageResponse struct {
-	MsgId      string `json:"msg_id" example:"msg123456"`
-	SenderId   string `json:"sender_id" example:"123456789"`
-	ReceiverId string `json:"receiver_id" example:"987654321"`
-	Content    string `json:"content" example:"你好"`
-	MsgType    string `json:"msg_type" example:"text"`
-	CreatedAt  string `json:"created_at" example:"2024-01-01T00:00:00Z"`
-}
-
-type OfflineMessageInfo struct {
-	MsgId      string `json:"msg_id" example:"msg123456"`
-	SenderId   string `json:"sender_id" example:"123456789"`
-	SenderName string `json:"sender_name" example:"sender"`
-	Content    string `json:"content" example:"你好"`
-	MsgType    string `json:"msg_type" example:"text"`
-	CreatedAt  string `json:"created_at" example:"2024-01-01T00:00:00Z"`
-}
-
-type OfflineMessagesResponse struct {
-	Messages []OfflineMessageInfo `json:"messages"`
-}
-
-type MarkAsReadResponse struct {
-	Success bool `json:"success" example:"true"`
-}
-
-type MarkAllAsReadResponse struct {
-	Success bool  `json:"success" example:"true"`
-	Count   int32 `json:"count" example:"10"`
-}
-
-type UnreadCountResponse struct {
-	Count int32 `json:"count" example:"5"`
-}
-
-type ErrorResponse struct {
-	Error string `json:"error" example:"invalid request"`
-}
-
-type HealthResponse struct {
-	Status      string `json:"status" example:"healthy"`
-	Service     string `json:"service" example:"gateway"`
-	OnlineUsers int    `json:"online_users" example:"100"`
-}
 
 // Register 处理用户注册请求并转发到用户服务。
 // @Summary 用户注册
@@ -247,22 +23,30 @@ type HealthResponse struct {
 // @Router /register [post]
 func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req user.RegisterRequest
+		var req RegisterRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		ctx := c.Request.Context()
 
-		resp, err := p.UserClient().Register(ctx, &req)
+		protoReq := &user.RegisterRequest{
+			Tele:     req.Tele,
+			Id:       req.ID,
+			Email:    req.Email,
+			Name:     req.Name,
+			Password: req.Password,
+		}
+
+		resp, err := p.UserClient().Register(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toRegisterResponse(resp))
 	}
 }
 
@@ -279,22 +63,29 @@ func Register(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Router /login [post]
 func Login(p *proxy.ServiceProxy, jwtUtil interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req user.LoginRequest
+		var req LoginRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		ctx := c.Request.Context()
 
-		resp, err := p.UserClient().Login(ctx, &req)
+		protoReq := &user.LoginRequest{
+			Tele:     req.Tele,
+			Password: req.Password,
+			Id:       req.ID,
+			Email:    req.Email,
+		}
+
+		resp, err := p.UserClient().Login(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toLoginResponse(resp))
 	}
 }
 
@@ -317,10 +108,10 @@ func GetUser(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.UserClient().GetUser(ctx, &user.GetUserRequest{UserId: userID})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toUserInfo(resp))
 	}
 }
 
@@ -342,10 +133,10 @@ func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.UserClient().GetFriends(ctx, &user.GetFriendsRequest{UserId: userID.(string)})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toFriendsListResponse(resp))
 	}
 }
 
@@ -357,35 +148,34 @@ func GetFriends(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Produce json
 // @Security BearerAuth
 // @Param request body AddFriendRequest true "添加好友请求参数"
-// @Success 200 {object} AddFriendResponse "好友请求已发送"
+// @Success 200 {object} CommonResponse "好友请求已发送"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /friends [post]
 func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			FriendID string `json:"friend_id"`
-			Reason   string `json:"reason"`
-		}
+		var req AddFriendRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.UserClient().AddFriend(ctx, &user.AddFriendRequest{
+		protoReq := &user.AddFriendRequest{
 			UserId:   userID.(string),
 			TargetId: req.FriendID,
 			Reason:   req.Reason,
-		})
+		}
+
+		resp, err := p.UserClient().AddFriend(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -397,7 +187,7 @@ func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Produce json
 // @Security BearerAuth
 // @Param friend_id path string true "好友ID"
-// @Success 200 {object} RemoveFriendResponse "删除成功"
+// @Success 200 {object} CommonResponse "删除成功"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /friends/{friend_id} [delete]
 func RemoveFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
@@ -412,10 +202,10 @@ func RemoveFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -428,35 +218,35 @@ func RemoveFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Security BearerAuth
 // @Param request_id path string true "好友请求ID"
 // @Param request body ReplyFriendRequestBody true "回复参数"
-// @Success 200 {object} ReplyFriendResponse "回复成功"
+// @Success 200 {object} CommonResponse "回复成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /friend_requests/{request_id} [put]
 func ReplyFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := c.Param("request_id")
-		var req struct {
-			Accept bool `json:"accept"`
-		}
+		var req ReplyFriendRequestBody
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.UserClient().ReplyFriend(ctx, &user.ReplyFriendRequest{
+		protoReq := &user.ReplyFriendRequest{
 			UserId:    userID.(string),
 			RequestId: requestID,
 			Accept:    req.Accept,
-		})
+		}
+
+		resp, err := p.UserClient().ReplyFriend(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -478,10 +268,10 @@ func GetPendingFriendRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.UserClient().GetPendingFriendRequests(ctx, &user.GetPendingFriendRequestsRequest{UserId: userID.(string)})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toFriendRequestsResponse(resp))
 	}
 }
 
@@ -499,29 +289,29 @@ func GetPendingFriendRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Router /groups [post]
 func CreateGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			Name        string `json:"name"`
-			Description string `json:"description"`
-		}
+		var req CreateGroupRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().CreateGroup(ctx, &group.CreateGroupRequest{
+		protoReq := &group.CreateGroupRequest{
 			OwnerId:     userID.(string),
 			Name:        req.Name,
 			Description: req.Description,
-		})
+			ImageUrl:    req.ImageURL,
+		}
+
+		resp, err := p.GroupClient().CreateGroup(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCreateGroupResponse(resp))
 	}
 }
 
@@ -544,10 +334,10 @@ func GetGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.GroupClient().GetGroup(ctx, &group.GetGroupRequest{GroupId: groupID})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toGroupInfo(resp))
 	}
 }
 
@@ -570,10 +360,10 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.GroupClient().GetMembers(ctx, &group.GetMembersRequest{GroupId: groupID})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toGroupMembersResponse(resp))
 	}
 }
 
@@ -587,17 +377,15 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Param id path string true "群组ID"
 // @Param member_id path string true "成员ID"
 // @Param request body ChangeGroupMemberRequest true "角色参数"
-// @Success 200 {object} ChangeGroupMemberResponse "修改成功"
+// @Success 200 {object} CommonResponse "修改成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /group/{id}/members/{member_id} [post]
 func ChangeGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			Role int32 `json:"role"`
-		}
+		var req ChangeGroupMemberRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 		ownerID, _ := c.Get("user_id")
@@ -605,18 +393,20 @@ func ChangeGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
 		memberID := c.Param("member_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().ChangeMember(ctx, &group.ChangeMemberRequest{
+		protoReq := &group.ChangeMemberRequest{
 			GroupId:  groupID,
 			OwnerId:  ownerID.(string),
 			MemberId: memberID,
 			Role:     group.MemberRole(req.Role),
-		})
+		}
+
+		resp, err := p.GroupClient().ChangeMember(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -629,22 +419,27 @@ func ChangeGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Security BearerAuth
 // @Param id path string true "群组ID"
 // @Param member_id path string true "成员ID"
-// @Success 200 {object} RemoveGroupMemberResponse "移除成功"
+// @Success 200 {object} CommonResponse "移除成功"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /groups/{id}/members/{member_id} [delete]
 func RemoveGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
 		memberID := c.Param("member_id")
+		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().RemoveMember(ctx, &group.RemoveMemberRequest{GroupId: groupID, MemberId: memberID})
+		resp, err := p.GroupClient().RemoveMember(ctx, &group.RemoveMemberRequest{
+			GroupId:  groupID,
+			AdminId:  userID.(string),
+			MemberId: memberID,
+		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -666,10 +461,10 @@ func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.GroupClient().GetUserGroups(ctx, &group.GetUserGroupsRequest{UserId: userID.(string)})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toUserGroupsResponse(resp))
 	}
 }
 
@@ -681,35 +476,34 @@ func GetUserGroups(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Produce json
 // @Security BearerAuth
 // @Param request body JoinGroupRequest true "加入群组请求参数"
-// @Success 200 {object} JoinGroupResponse "申请已发送"
+// @Success 200 {object} CommonResponse "申请已发送"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /group_requests [post]
 func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			GroupID string `json:"group_id"`
-			Reason  string `json:"reason"`
-		}
+		var req JoinGroupRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().JoinGroup(ctx, &group.JoinGroupRequest{
+		protoReq := &group.JoinGroupRequest{
 			UserId:  userID.(string),
 			GroupId: req.GroupID,
 			Reason:  req.Reason,
-		})
+		}
+
+		resp, err := p.GroupClient().JoinGroup(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -727,12 +521,9 @@ func JoinGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Router /group_requests [get]
 func GetPendingGroupJoinRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			GroupID string `json:"group_id"`
-		}
-		err := c.ShouldBindJSON(&req)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		var req GetPendingGroupJoinRequestsBody
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 		userID, _ := c.Get("user_id")
@@ -744,10 +535,10 @@ func GetPendingGroupJoinRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toGroupJoinRequestsResponse(resp))
 	}
 }
 
@@ -760,34 +551,34 @@ func GetPendingGroupJoinRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Security BearerAuth
 // @Param request_id path string true "请求ID"
 // @Param request body ReplyGroupJoinRequestBody true "回复参数"
-// @Success 200 {object} ReplyGroupJoinResponse "回复成功"
+// @Success 200 {object} CommonResponse "回复成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /group_requests/{request_id} [put]
 func ReplyGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := c.Param("request_id")
-		var req struct {
-			Accept bool `json:"accept"`
-		}
+		var req ReplyGroupJoinRequestBody
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().ReplyGroupJoin(ctx, &group.ReplyGroupJoinRequest{
+		protoReq := &group.ReplyGroupJoinRequest{
 			OwnerId:   userID.(string),
 			RequestId: requestID,
 			Accept:    req.Accept,
-		})
+		}
+
+		resp, err := p.GroupClient().ReplyGroupJoin(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -799,7 +590,7 @@ func ReplyGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "群组ID"
-// @Success 200 {object} LeaveGroupResponse "退出成功"
+// @Success 200 {object} CommonResponse "退出成功"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /groups/{id}/members/me [delete]
 func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
@@ -815,10 +606,10 @@ func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -836,31 +627,30 @@ func LeaveGroup(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Router /messages [post]
 func SendMessage(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			ReceiverID string `json:"receiver_id"`
-			Content    string `json:"content"`
-			MsgType    string `json:"msg_type"`
-		}
+		var req SendMessageRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.MessageClient().SendMessage(ctx, &message.SendMessageRequest{
+		protoReq := &message.SendMessageRequest{
 			SenderId:   userID.(string),
 			ReceiverId: req.ReceiverID,
 			Content:    req.Content,
 			MsgType:    req.MsgType,
-		})
+			Timestamp:  req.Timestamp,
+		}
+
+		resp, err := p.MessageClient().SendMessage(ctx, protoReq)
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toSendMessageResponse(resp))
 	}
 }
 
@@ -886,10 +676,10 @@ func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toOfflineMessagesResponse(resp))
 	}
 }
 
@@ -901,24 +691,26 @@ func GetOfflineMessages(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "消息ID"
-// @Success 200 {object} MarkAsReadResponse "标记成功"
+// @Success 200 {object} CommonResponse "标记成功"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /messages/{id}/read [put]
 func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		msgID := c.Param("id")
+		userID, _ := c.Get("user_id")
 
 		ctx := c.Request.Context()
 
 		resp, err := p.MessageClient().MarkAsRead(ctx, &message.MarkAsReadRequest{
-			MsgId: msgID,
+			MsgId:  msgID,
+			UserId: userID.(string),
 		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -929,7 +721,7 @@ func MarkAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} MarkAllAsReadResponse "标记成功"
+// @Success 200 {object} CommonResponse "标记成功"
 // @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /messages/read [put]
 func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
@@ -942,10 +734,10 @@ func MarkAllAsRead(p *proxy.ServiceProxy) gin.HandlerFunc {
 		})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toCommonResponse(resp))
 	}
 }
 
@@ -967,9 +759,9 @@ func GetUnreadCount(p *proxy.ServiceProxy) gin.HandlerFunc {
 		resp, err := p.MessageClient().GetUnreadCount(ctx, &message.GetUnreadCountRequest{UserId: userID.(string)})
 		if err != nil {
 			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, toUnreadCountResponse(resp))
 	}
 }

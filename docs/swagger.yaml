@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  handler.AddFriendRequest:
+  services_gateway_handler.AddFriendRequest:
     properties:
       friend_id:
         example: "123456"
@@ -8,130 +8,134 @@ definitions:
       reason:
         example: 想加你为好友
         type: string
+    required:
+    - friend_id
     type: object
-  handler.AddFriendResponse:
-    properties:
-      request_id:
-        example: "987654321"
-        type: string
-      status:
-        example: pending
-        type: string
-    type: object
-  handler.ChangeGroupMemberRequest:
+  services_gateway_handler.ChangeGroupMemberRequest:
     properties:
       role:
         example: 1
         type: integer
+    required:
+    - role
     type: object
-  handler.ChangeGroupMemberResponse:
+  services_gateway_handler.CommonResponse:
     properties:
-      role:
-        example: admin
+      code:
+        example: 0
+        type: integer
+      message:
+        example: 操作成功
         type: string
       success:
         example: true
         type: boolean
     type: object
-  handler.CreateGroupRequest:
+  services_gateway_handler.CreateGroupRequest:
     properties:
       description:
         example: 这是一个技术交流群
+        type: string
+      image_url:
+        example: https://example.com/group.jpg
         type: string
       name:
         example: 技术交流群
         type: string
+    required:
+    - name
     type: object
-  handler.CreateGroupResponse:
+  services_gateway_handler.CreateGroupResponse:
     properties:
-      description:
-        example: 这是一个技术交流群
-        type: string
       group_id:
         example: "789012"
         type: string
       name:
         example: 技术交流群
         type: string
-      owner_id:
-        example: "123456789"
-        type: string
     type: object
-  handler.ErrorResponse:
+  services_gateway_handler.ErrorResponse:
     properties:
       error:
         example: invalid request
         type: string
     type: object
-  handler.FriendInfo:
+  services_gateway_handler.FriendInfo:
     properties:
-      avatar:
+      avatar_url:
         example: https://example.com/avatar.jpg
         type: string
-      friend_id:
+      id:
         example: "123456789"
         type: string
-      nickname:
-        example: My Friend
+      name:
+        example: frienduser
         type: string
       status:
         example: 1
         type: integer
-      username:
-        example: frienduser
+      tele:
+        example: "13800138000"
         type: string
     type: object
-  handler.FriendRequestInfo:
+  services_gateway_handler.FriendRequestInfo:
     properties:
       created_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
-      from_name:
-        example: sender
-        type: string
-      from_user_id:
+        example: 1704067200
+        type: integer
+      from_uid:
         example: "123456789"
+        type: string
+      from_user:
+        $ref: '#/definitions/services_gateway_handler.UserInfo'
+      id:
+        example: "987654321"
         type: string
       reason:
         example: 想加你为好友
         type: string
-      request_id:
-        example: "987654321"
-        type: string
       status:
         example: pending
         type: string
+      to_uid:
+        example: "987654321"
+        type: string
     type: object
-  handler.FriendRequestsResponse:
+  services_gateway_handler.FriendRequestsResponse:
     properties:
       requests:
         items:
-          $ref: '#/definitions/handler.FriendRequestInfo'
+          $ref: '#/definitions/services_gateway_handler.FriendRequestInfo'
         type: array
     type: object
-  handler.FriendsListResponse:
+  services_gateway_handler.FriendsListResponse:
     properties:
       friends:
         items:
-          $ref: '#/definitions/handler.FriendInfo'
+          $ref: '#/definitions/services_gateway_handler.FriendInfo'
         type: array
     type: object
-  handler.GetPendingGroupJoinRequestsBody:
+  services_gateway_handler.GetPendingGroupJoinRequestsBody:
     properties:
       group_id:
         example: "789012"
         type: string
+    required:
+    - group_id
     type: object
-  handler.GroupInfo:
+  services_gateway_handler.GroupInfo:
     properties:
       created_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
+        example: 1704067200
+        type: integer
       description:
         example: 这是一个技术交流群
         type: string
-      group_id:
+      id:
         example: "789012"
+        type: string
+      image_url:
+        example: https://example.com/group.jpg
         type: string
       member_count:
         example: 50
@@ -142,61 +146,55 @@ definitions:
       owner_id:
         example: "123456789"
         type: string
+      type:
+        example: public
+        type: string
+      updated_at:
+        example: 1704067200
+        type: integer
     type: object
-  handler.GroupJoinRequestInfo:
+  services_gateway_handler.GroupJoinRequestInfo:
     properties:
       created_at:
-        example: "2024-01-01T00:00:00Z"
+        example: 1704067200
+        type: integer
+      group_id:
+        example: "789012"
+        type: string
+      id:
+        example: "987654321"
         type: string
       reason:
         example: 想加入群组
         type: string
-      request_id:
-        example: "987654321"
-        type: string
       status:
         example: pending
+        type: string
+      user_avatar:
+        example: https://example.com/avatar.jpg
         type: string
       user_id:
         example: "123456789"
         type: string
-      username:
+      user_name:
         example: applicant
         type: string
     type: object
-  handler.GroupJoinRequestsResponse:
+  services_gateway_handler.GroupJoinRequestsResponse:
     properties:
       requests:
         items:
-          $ref: '#/definitions/handler.GroupJoinRequestInfo'
+          $ref: '#/definitions/services_gateway_handler.GroupJoinRequestInfo'
         type: array
     type: object
-  handler.GroupMemberInfo:
-    properties:
-      joined_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
-      member_id:
-        example: "123456789"
-        type: string
-      nickname:
-        example: 群成员1
-        type: string
-      role:
-        example: member
-        type: string
-      username:
-        example: member1
-        type: string
-    type: object
-  handler.GroupMembersResponse:
+  services_gateway_handler.GroupMembersResponse:
     properties:
       members:
         items:
-          $ref: '#/definitions/handler.GroupMemberInfo'
+          $ref: '#/definitions/services_gateway_handler.MemberInfo'
         type: array
     type: object
-  handler.JoinGroupRequest:
+  services_gateway_handler.JoinGroupRequest:
     properties:
       group_id:
         example: "789012"
@@ -204,159 +202,143 @@ definitions:
       reason:
         example: 想加入群组
         type: string
+    required:
+    - group_id
     type: object
-  handler.JoinGroupResponse:
+  services_gateway_handler.LoginRequest:
     properties:
-      request_id:
-        example: "987654321"
+      email:
+        example: user@example.com
         type: string
-      status:
-        example: pending
+      id:
+        example: user123
         type: string
-    type: object
-  handler.LeaveGroupResponse:
-    properties:
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.LoginRequest:
-    properties:
       password:
         example: password123
         type: string
-      username:
+      tele:
+        example: "13800138000"
+        type: string
+    required:
+    - password
+    type: object
+  services_gateway_handler.LoginResponse:
+    properties:
+      name:
         example: testuser
         type: string
-    type: object
-  handler.LoginResponse:
-    properties:
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
       user_id:
         example: "123456789"
         type: string
-      username:
-        example: testuser
+    type: object
+  services_gateway_handler.MemberInfo:
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      joined_at:
+        example: 1704067200
+        type: integer
+      name:
+        example: member1
+        type: string
+      nickname:
+        example: 群成员1
+        type: string
+      role:
+        example: member
+        type: string
+      user_id:
+        example: "123456789"
         type: string
     type: object
-  handler.MarkAllAsReadResponse:
-    properties:
-      count:
-        example: 10
-        type: integer
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.MarkAsReadResponse:
-    properties:
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.OfflineMessageInfo:
+  services_gateway_handler.MessageInfo:
     properties:
       content:
         example: 你好
         type: string
-      created_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
+      is_read:
+        example: false
+        type: boolean
+      is_revoked:
+        example: false
+        type: boolean
       msg_id:
         example: msg123456
         type: string
       msg_type:
         example: text
         type: string
+      read_at:
+        example: 1704067200
+        type: integer
+      receiver_id:
+        example: "987654321"
+        type: string
       sender_id:
         example: "123456789"
         type: string
-      sender_name:
-        example: sender
-        type: string
+      timestamp:
+        example: 1704067200
+        type: integer
     type: object
-  handler.OfflineMessagesResponse:
+  services_gateway_handler.OfflineMessagesResponse:
     properties:
       messages:
         items:
-          $ref: '#/definitions/handler.OfflineMessageInfo'
+          $ref: '#/definitions/services_gateway_handler.MessageInfo'
         type: array
+      total:
+        type: integer
     type: object
-  handler.RegisterRequest:
+  services_gateway_handler.RegisterRequest:
     properties:
       email:
         example: user@example.com
         type: string
-      nickname:
-        example: Test User
+      id:
+        example: user123
+        type: string
+      name:
+        example: testuser
         type: string
       password:
         example: password123
         type: string
-      username:
-        example: testuser
+      tele:
+        example: "13800138000"
         type: string
+    required:
+    - email
+    - name
+    - password
+    - tele
     type: object
-  handler.RegisterResponse:
+  services_gateway_handler.RegisterResponse:
     properties:
-      email:
-        example: user@example.com
-        type: string
-      nickname:
-        example: Test User
+      name:
+        example: testuser
         type: string
       user_id:
         example: "123456789"
         type: string
-      username:
-        example: testuser
-        type: string
     type: object
-  handler.RemoveFriendResponse:
-    properties:
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.RemoveGroupMemberResponse:
-    properties:
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.ReplyFriendRequestBody:
+  services_gateway_handler.ReplyFriendRequestBody:
     properties:
       accept:
         example: true
         type: boolean
     type: object
-  handler.ReplyFriendResponse:
-    properties:
-      status:
-        example: accepted
-        type: string
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.ReplyGroupJoinRequestBody:
+  services_gateway_handler.ReplyGroupJoinRequestBody:
     properties:
       accept:
         example: true
         type: boolean
     type: object
-  handler.ReplyGroupJoinResponse:
-    properties:
-      status:
-        example: accepted
-        type: string
-      success:
-        example: true
-        type: boolean
-    type: object
-  handler.SendMessageRequest:
+  services_gateway_handler.SendMessageRequest:
     properties:
       content:
         example: 你好
@@ -367,61 +349,67 @@ definitions:
       receiver_id:
         example: "123456"
         type: string
+      timestamp:
+        example: 1704067200
+        type: integer
+    required:
+    - content
+    - msg_type
+    - receiver_id
     type: object
-  handler.SendMessageResponse:
+  services_gateway_handler.SendMessageResponse:
     properties:
-      content:
-        example: 你好
-        type: string
-      created_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
       msg_id:
         example: msg123456
         type: string
-      msg_type:
-        example: text
-        type: string
-      receiver_id:
-        example: "987654321"
-        type: string
-      sender_id:
-        example: "123456789"
-        type: string
+      success:
+        example: true
+        type: boolean
+      timestamp:
+        example: 1704067200
+        type: integer
     type: object
-  handler.UnreadCountResponse:
+  services_gateway_handler.UnreadCountResponse:
     properties:
       count:
         example: 5
         type: integer
+      group_counts:
+        additionalProperties:
+          format: int64
+          type: integer
+        type: object
     type: object
-  handler.UserGroupsResponse:
+  services_gateway_handler.UserGroupsResponse:
     properties:
       groups:
         items:
-          $ref: '#/definitions/handler.GroupInfo'
+          $ref: '#/definitions/services_gateway_handler.GroupInfo'
         type: array
     type: object
-  handler.UserInfo:
+  services_gateway_handler.UserInfo:
     properties:
-      avatar:
+      avatar_url:
         example: https://example.com/avatar.jpg
         type: string
-      email:
-        example: user@example.com
+      created_at:
+        example: 1704067200
+        type: integer
+      id:
+        example: "123456789"
         type: string
-      nickname:
-        example: Test User
+      name:
+        example: testuser
         type: string
       status:
         example: 1
         type: integer
-      user_id:
-        example: "123456789"
+      tele:
+        example: "13800138000"
         type: string
-      username:
-        example: testuser
-        type: string
+      updated_at:
+        example: 1704067200
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -448,11 +436,11 @@ paths:
         "200":
           description: 好友请求列表
           schema:
-            $ref: '#/definitions/handler.FriendRequestsResponse'
+            $ref: '#/definitions/services_gateway_handler.FriendRequestsResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取待处理好友请求
@@ -474,22 +462,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ReplyFriendRequestBody'
+          $ref: '#/definitions/services_gateway_handler.ReplyFriendRequestBody'
       produces:
       - application/json
       responses:
         "200":
           description: 回复成功
           schema:
-            $ref: '#/definitions/handler.ReplyFriendResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 回复好友请求
@@ -506,11 +494,11 @@ paths:
         "200":
           description: 好友列表
           schema:
-            $ref: '#/definitions/handler.FriendsListResponse'
+            $ref: '#/definitions/services_gateway_handler.FriendsListResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取好友列表
@@ -526,22 +514,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.AddFriendRequest'
+          $ref: '#/definitions/services_gateway_handler.AddFriendRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 好友请求已发送
           schema:
-            $ref: '#/definitions/handler.AddFriendResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 添加好友
@@ -564,11 +552,11 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/handler.RemoveFriendResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除好友
@@ -595,22 +583,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ChangeGroupMemberRequest'
+          $ref: '#/definitions/services_gateway_handler.ChangeGroupMemberRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 修改成功
           schema:
-            $ref: '#/definitions/handler.ChangeGroupMemberResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 修改群组成员角色
@@ -627,22 +615,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.GetPendingGroupJoinRequestsBody'
+          $ref: '#/definitions/services_gateway_handler.GetPendingGroupJoinRequestsBody'
       produces:
       - application/json
       responses:
         "200":
           description: 加入请求列表
           schema:
-            $ref: '#/definitions/handler.GroupJoinRequestsResponse'
+            $ref: '#/definitions/services_gateway_handler.GroupJoinRequestsResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取待处理群组加入请求
@@ -658,22 +646,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.JoinGroupRequest'
+          $ref: '#/definitions/services_gateway_handler.JoinGroupRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 申请已发送
           schema:
-            $ref: '#/definitions/handler.JoinGroupResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 申请加入群组
@@ -695,22 +683,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ReplyGroupJoinRequestBody'
+          $ref: '#/definitions/services_gateway_handler.ReplyGroupJoinRequestBody'
       produces:
       - application/json
       responses:
         "200":
           description: 回复成功
           schema:
-            $ref: '#/definitions/handler.ReplyGroupJoinResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 回复群组加入请求
@@ -727,11 +715,11 @@ paths:
         "200":
           description: 群组列表
           schema:
-            $ref: '#/definitions/handler.UserGroupsResponse'
+            $ref: '#/definitions/services_gateway_handler.UserGroupsResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取用户群组列表
@@ -747,22 +735,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateGroupRequest'
+          $ref: '#/definitions/services_gateway_handler.CreateGroupRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 群组创建成功
           schema:
-            $ref: '#/definitions/handler.CreateGroupResponse'
+            $ref: '#/definitions/services_gateway_handler.CreateGroupResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建群组
@@ -785,11 +773,11 @@ paths:
         "200":
           description: 群组信息
           schema:
-            $ref: '#/definitions/handler.GroupInfo'
+            $ref: '#/definitions/services_gateway_handler.GroupInfo'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取群组信息
@@ -812,11 +800,11 @@ paths:
         "200":
           description: 群组成员列表
           schema:
-            $ref: '#/definitions/handler.GroupMembersResponse'
+            $ref: '#/definitions/services_gateway_handler.GroupMembersResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取群组成员列表
@@ -844,11 +832,11 @@ paths:
         "200":
           description: 移除成功
           schema:
-            $ref: '#/definitions/handler.RemoveGroupMemberResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 移除群组成员
@@ -871,11 +859,11 @@ paths:
         "200":
           description: 退出成功
           schema:
-            $ref: '#/definitions/handler.LeaveGroupResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 退出群组
@@ -892,22 +880,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.LoginRequest'
+          $ref: '#/definitions/services_gateway_handler.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 登录成功，返回 Token
           schema:
-            $ref: '#/definitions/handler.LoginResponse'
+            $ref: '#/definitions/services_gateway_handler.LoginResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       summary: 用户登录
       tags:
       - 用户认证
@@ -922,22 +910,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.SendMessageRequest'
+          $ref: '#/definitions/services_gateway_handler.SendMessageRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 消息发送成功
           schema:
-            $ref: '#/definitions/handler.SendMessageResponse'
+            $ref: '#/definitions/services_gateway_handler.SendMessageResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 发送消息
@@ -960,11 +948,11 @@ paths:
         "200":
           description: 标记成功
           schema:
-            $ref: '#/definitions/handler.MarkAsReadResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 标记消息已读
@@ -981,11 +969,11 @@ paths:
         "200":
           description: 离线消息列表
           schema:
-            $ref: '#/definitions/handler.OfflineMessagesResponse'
+            $ref: '#/definitions/services_gateway_handler.OfflineMessagesResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取离线消息
@@ -1002,11 +990,11 @@ paths:
         "200":
           description: 标记成功
           schema:
-            $ref: '#/definitions/handler.MarkAllAsReadResponse'
+            $ref: '#/definitions/services_gateway_handler.CommonResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 标记所有消息已读
@@ -1023,11 +1011,11 @@ paths:
         "200":
           description: 未读消息数
           schema:
-            $ref: '#/definitions/handler.UnreadCountResponse'
+            $ref: '#/definitions/services_gateway_handler.UnreadCountResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取未读消息数
@@ -1044,22 +1032,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.RegisterRequest'
+          $ref: '#/definitions/services_gateway_handler.RegisterRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 注册成功
           schema:
-            $ref: '#/definitions/handler.RegisterResponse'
+            $ref: '#/definitions/services_gateway_handler.RegisterResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       summary: 用户注册
       tags:
       - 用户认证
@@ -1080,11 +1068,11 @@ paths:
         "200":
           description: 用户信息
           schema:
-            $ref: '#/definitions/handler.UserInfo'
+            $ref: '#/definitions/services_gateway_handler.UserInfo'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/services_gateway_handler.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取用户信息

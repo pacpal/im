@@ -46,13 +46,13 @@ const docTemplate = `{
                     "200": {
                         "description": "好友请求列表",
                         "schema": {
-                            "$ref": "#/definitions/handler.FriendRequestsResponse"
+                            "$ref": "#/definitions/services_gateway_handler.FriendRequestsResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ReplyFriendRequestBody"
+                            "$ref": "#/definitions/services_gateway_handler.ReplyFriendRequestBody"
                         }
                     }
                 ],
@@ -98,19 +98,19 @@ const docTemplate = `{
                     "200": {
                         "description": "回复成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.ReplyFriendResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -138,13 +138,13 @@ const docTemplate = `{
                     "200": {
                         "description": "好友列表",
                         "schema": {
-                            "$ref": "#/definitions/handler.FriendsListResponse"
+                            "$ref": "#/definitions/services_gateway_handler.FriendsListResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -173,7 +173,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.AddFriendRequest"
+                            "$ref": "#/definitions/services_gateway_handler.AddFriendRequest"
                         }
                     }
                 ],
@@ -181,19 +181,19 @@ const docTemplate = `{
                     "200": {
                         "description": "好友请求已发送",
                         "schema": {
-                            "$ref": "#/definitions/handler.AddFriendResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -230,13 +230,13 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.RemoveFriendResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -281,7 +281,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ChangeGroupMemberRequest"
+                            "$ref": "#/definitions/services_gateway_handler.ChangeGroupMemberRequest"
                         }
                     }
                 ],
@@ -289,19 +289,19 @@ const docTemplate = `{
                     "200": {
                         "description": "修改成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.ChangeGroupMemberResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -332,7 +332,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.GetPendingGroupJoinRequestsBody"
+                            "$ref": "#/definitions/services_gateway_handler.GetPendingGroupJoinRequestsBody"
                         }
                     }
                 ],
@@ -340,19 +340,19 @@ const docTemplate = `{
                     "200": {
                         "description": "加入请求列表",
                         "schema": {
-                            "$ref": "#/definitions/handler.GroupJoinRequestsResponse"
+                            "$ref": "#/definitions/services_gateway_handler.GroupJoinRequestsResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -381,7 +381,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.JoinGroupRequest"
+                            "$ref": "#/definitions/services_gateway_handler.JoinGroupRequest"
                         }
                     }
                 ],
@@ -389,19 +389,19 @@ const docTemplate = `{
                     "200": {
                         "description": "申请已发送",
                         "schema": {
-                            "$ref": "#/definitions/handler.JoinGroupResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -439,7 +439,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ReplyGroupJoinRequestBody"
+                            "$ref": "#/definitions/services_gateway_handler.ReplyGroupJoinRequestBody"
                         }
                     }
                 ],
@@ -447,19 +447,19 @@ const docTemplate = `{
                     "200": {
                         "description": "回复成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.ReplyGroupJoinResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -487,13 +487,13 @@ const docTemplate = `{
                     "200": {
                         "description": "群组列表",
                         "schema": {
-                            "$ref": "#/definitions/handler.UserGroupsResponse"
+                            "$ref": "#/definitions/services_gateway_handler.UserGroupsResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -522,7 +522,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateGroupRequest"
+                            "$ref": "#/definitions/services_gateway_handler.CreateGroupRequest"
                         }
                     }
                 ],
@@ -530,19 +530,19 @@ const docTemplate = `{
                     "200": {
                         "description": "群组创建成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateGroupResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CreateGroupResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -579,13 +579,13 @@ const docTemplate = `{
                     "200": {
                         "description": "群组信息",
                         "schema": {
-                            "$ref": "#/definitions/handler.GroupInfo"
+                            "$ref": "#/definitions/services_gateway_handler.GroupInfo"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -622,13 +622,13 @@ const docTemplate = `{
                     "200": {
                         "description": "群组成员列表",
                         "schema": {
-                            "$ref": "#/definitions/handler.GroupMembersResponse"
+                            "$ref": "#/definitions/services_gateway_handler.GroupMembersResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -665,13 +665,13 @@ const docTemplate = `{
                     "200": {
                         "description": "退出成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.LeaveGroupResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -715,13 +715,13 @@ const docTemplate = `{
                     "200": {
                         "description": "移除成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.RemoveGroupMemberResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -747,7 +747,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
+                            "$ref": "#/definitions/services_gateway_handler.LoginRequest"
                         }
                     }
                 ],
@@ -755,19 +755,19 @@ const docTemplate = `{
                     "200": {
                         "description": "登录成功，返回 Token",
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginResponse"
+                            "$ref": "#/definitions/services_gateway_handler.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -798,7 +798,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SendMessageRequest"
+                            "$ref": "#/definitions/services_gateway_handler.SendMessageRequest"
                         }
                     }
                 ],
@@ -806,19 +806,19 @@ const docTemplate = `{
                     "200": {
                         "description": "消息发送成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.SendMessageResponse"
+                            "$ref": "#/definitions/services_gateway_handler.SendMessageResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -846,13 +846,13 @@ const docTemplate = `{
                     "200": {
                         "description": "离线消息列表",
                         "schema": {
-                            "$ref": "#/definitions/handler.OfflineMessagesResponse"
+                            "$ref": "#/definitions/services_gateway_handler.OfflineMessagesResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -880,13 +880,13 @@ const docTemplate = `{
                     "200": {
                         "description": "标记成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.MarkAllAsReadResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -914,13 +914,13 @@ const docTemplate = `{
                     "200": {
                         "description": "未读消息数",
                         "schema": {
-                            "$ref": "#/definitions/handler.UnreadCountResponse"
+                            "$ref": "#/definitions/services_gateway_handler.UnreadCountResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -957,13 +957,13 @@ const docTemplate = `{
                     "200": {
                         "description": "标记成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.MarkAsReadResponse"
+                            "$ref": "#/definitions/services_gateway_handler.CommonResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -989,7 +989,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRequest"
+                            "$ref": "#/definitions/services_gateway_handler.RegisterRequest"
                         }
                     }
                 ],
@@ -997,19 +997,19 @@ const docTemplate = `{
                     "200": {
                         "description": "注册成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterResponse"
+                            "$ref": "#/definitions/services_gateway_handler.RegisterResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -1046,13 +1046,13 @@ const docTemplate = `{
                     "200": {
                         "description": "用户信息",
                         "schema": {
-                            "$ref": "#/definitions/handler.UserInfo"
+                            "$ref": "#/definitions/services_gateway_handler.UserInfo"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/services_gateway_handler.ErrorResponse"
                         }
                     }
                 }
@@ -1060,8 +1060,11 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.AddFriendRequest": {
+        "services_gateway_handler.AddFriendRequest": {
             "type": "object",
+            "required": [
+                "friend_id"
+            ],
             "properties": {
                 "friend_id": {
                     "type": "string",
@@ -1073,21 +1076,11 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.AddFriendResponse": {
+        "services_gateway_handler.ChangeGroupMemberRequest": {
             "type": "object",
-            "properties": {
-                "request_id": {
-                    "type": "string",
-                    "example": "987654321"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "pending"
-                }
-            }
-        },
-        "handler.ChangeGroupMemberRequest": {
-            "type": "object",
+            "required": [
+                "role"
+            ],
             "properties": {
                 "role": {
                     "type": "integer",
@@ -1095,12 +1088,16 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.ChangeGroupMemberResponse": {
+        "services_gateway_handler.CommonResponse": {
             "type": "object",
             "properties": {
-                "role": {
+                "code": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "message": {
                     "type": "string",
-                    "example": "admin"
+                    "example": "操作成功"
                 },
                 "success": {
                     "type": "boolean",
@@ -1108,12 +1105,19 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateGroupRequest": {
+        "services_gateway_handler.CreateGroupRequest": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
                 "description": {
                     "type": "string",
                     "example": "这是一个技术交流群"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/group.jpg"
                 },
                 "name": {
                     "type": "string",
@@ -1121,13 +1125,9 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateGroupResponse": {
+        "services_gateway_handler.CreateGroupResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "这是一个技术交流群"
-                },
                 "group_id": {
                     "type": "string",
                     "example": "789012"
@@ -1135,14 +1135,10 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "技术交流群"
-                },
-                "owner_id": {
-                    "type": "string",
-                    "example": "123456789"
                 }
             }
         },
-        "handler.ErrorResponse": {
+        "services_gateway_handler.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -1151,84 +1147,90 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.FriendInfo": {
+        "services_gateway_handler.FriendInfo": {
             "type": "object",
             "properties": {
-                "avatar": {
+                "avatar_url": {
                     "type": "string",
                     "example": "https://example.com/avatar.jpg"
                 },
-                "friend_id": {
+                "id": {
                     "type": "string",
                     "example": "123456789"
                 },
-                "nickname": {
+                "name": {
                     "type": "string",
-                    "example": "My Friend"
+                    "example": "frienduser"
                 },
                 "status": {
                     "type": "integer",
                     "example": 1
                 },
-                "username": {
+                "tele": {
                     "type": "string",
-                    "example": "frienduser"
+                    "example": "13800138000"
                 }
             }
         },
-        "handler.FriendRequestInfo": {
+        "services_gateway_handler.FriendRequestInfo": {
             "type": "object",
             "properties": {
                 "created_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
+                    "type": "integer",
+                    "example": 1704067200
                 },
-                "from_name": {
-                    "type": "string",
-                    "example": "sender"
-                },
-                "from_user_id": {
+                "from_uid": {
                     "type": "string",
                     "example": "123456789"
+                },
+                "from_user": {
+                    "$ref": "#/definitions/services_gateway_handler.UserInfo"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "987654321"
                 },
                 "reason": {
                     "type": "string",
                     "example": "想加你为好友"
                 },
-                "request_id": {
-                    "type": "string",
-                    "example": "987654321"
-                },
                 "status": {
                     "type": "string",
                     "example": "pending"
+                },
+                "to_uid": {
+                    "type": "string",
+                    "example": "987654321"
                 }
             }
         },
-        "handler.FriendRequestsResponse": {
+        "services_gateway_handler.FriendRequestsResponse": {
             "type": "object",
             "properties": {
                 "requests": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.FriendRequestInfo"
+                        "$ref": "#/definitions/services_gateway_handler.FriendRequestInfo"
                     }
                 }
             }
         },
-        "handler.FriendsListResponse": {
+        "services_gateway_handler.FriendsListResponse": {
             "type": "object",
             "properties": {
                 "friends": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.FriendInfo"
+                        "$ref": "#/definitions/services_gateway_handler.FriendInfo"
                     }
                 }
             }
         },
-        "handler.GetPendingGroupJoinRequestsBody": {
+        "services_gateway_handler.GetPendingGroupJoinRequestsBody": {
             "type": "object",
+            "required": [
+                "group_id"
+            ],
             "properties": {
                 "group_id": {
                     "type": "string",
@@ -1236,20 +1238,24 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GroupInfo": {
+        "services_gateway_handler.GroupInfo": {
             "type": "object",
             "properties": {
                 "created_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
+                    "type": "integer",
+                    "example": 1704067200
                 },
                 "description": {
                     "type": "string",
                     "example": "这是一个技术交流群"
                 },
-                "group_id": {
+                "id": {
                     "type": "string",
                     "example": "789012"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/group.jpg"
                 },
                 "member_count": {
                     "type": "integer",
@@ -1262,87 +1268,81 @@ const docTemplate = `{
                 "owner_id": {
                     "type": "string",
                     "example": "123456789"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "public"
+                },
+                "updated_at": {
+                    "type": "integer",
+                    "example": 1704067200
                 }
             }
         },
-        "handler.GroupJoinRequestInfo": {
+        "services_gateway_handler.GroupJoinRequestInfo": {
             "type": "object",
             "properties": {
                 "created_at": {
+                    "type": "integer",
+                    "example": 1704067200
+                },
+                "group_id": {
                     "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
+                    "example": "789012"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "987654321"
                 },
                 "reason": {
                     "type": "string",
                     "example": "想加入群组"
                 },
-                "request_id": {
-                    "type": "string",
-                    "example": "987654321"
-                },
                 "status": {
                     "type": "string",
                     "example": "pending"
+                },
+                "user_avatar": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
                 },
                 "user_id": {
                     "type": "string",
                     "example": "123456789"
                 },
-                "username": {
+                "user_name": {
                     "type": "string",
                     "example": "applicant"
                 }
             }
         },
-        "handler.GroupJoinRequestsResponse": {
+        "services_gateway_handler.GroupJoinRequestsResponse": {
             "type": "object",
             "properties": {
                 "requests": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.GroupJoinRequestInfo"
+                        "$ref": "#/definitions/services_gateway_handler.GroupJoinRequestInfo"
                     }
                 }
             }
         },
-        "handler.GroupMemberInfo": {
-            "type": "object",
-            "properties": {
-                "joined_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                },
-                "member_id": {
-                    "type": "string",
-                    "example": "123456789"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "群成员1"
-                },
-                "role": {
-                    "type": "string",
-                    "example": "member"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "member1"
-                }
-            }
-        },
-        "handler.GroupMembersResponse": {
+        "services_gateway_handler.GroupMembersResponse": {
             "type": "object",
             "properties": {
                 "members": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.GroupMemberInfo"
+                        "$ref": "#/definitions/services_gateway_handler.MemberInfo"
                     }
                 }
             }
         },
-        "handler.JoinGroupRequest": {
+        "services_gateway_handler.JoinGroupRequest": {
             "type": "object",
+            "required": [
+                "group_id"
+            ],
             "properties": {
                 "group_id": {
                     "type": "string",
@@ -1354,44 +1354,37 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.JoinGroupResponse": {
+        "services_gateway_handler.LoginRequest": {
             "type": "object",
+            "required": [
+                "password"
+            ],
             "properties": {
-                "request_id": {
+                "email": {
                     "type": "string",
-                    "example": "987654321"
+                    "example": "user@example.com"
                 },
-                "status": {
+                "id": {
                     "type": "string",
-                    "example": "pending"
-                }
-            }
-        },
-        "handler.LeaveGroupResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "handler.LoginRequest": {
-            "type": "object",
-            "properties": {
+                    "example": "user123"
+                },
                 "password": {
                     "type": "string",
                     "example": "password123"
                 },
-                "username": {
+                "tele": {
                     "type": "string",
-                    "example": "testuser"
+                    "example": "13800138000"
                 }
             }
         },
-        "handler.LoginResponse": {
+        "services_gateway_handler.LoginResponse": {
             "type": "object",
             "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "testuser"
+                },
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -1399,45 +1392,52 @@ const docTemplate = `{
                 "user_id": {
                     "type": "string",
                     "example": "123456789"
-                },
-                "username": {
+                }
+            }
+        },
+        "services_gateway_handler.MemberInfo": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
                     "type": "string",
-                    "example": "testuser"
-                }
-            }
-        },
-        "handler.MarkAllAsReadResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer",
-                    "example": 10
+                    "example": "https://example.com/avatar.jpg"
                 },
-                "success": {
-                    "type": "boolean",
-                    "example": true
+                "joined_at": {
+                    "type": "integer",
+                    "example": 1704067200
+                },
+                "name": {
+                    "type": "string",
+                    "example": "member1"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "群成员1"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "member"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "123456789"
                 }
             }
         },
-        "handler.MarkAsReadResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "handler.OfflineMessageInfo": {
+        "services_gateway_handler.MessageInfo": {
             "type": "object",
             "properties": {
                 "content": {
                     "type": "string",
                     "example": "你好"
                 },
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
+                "is_read": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_revoked": {
+                    "type": "boolean",
+                    "example": false
                 },
                 "msg_id": {
                     "type": "string",
@@ -1447,88 +1447,83 @@ const docTemplate = `{
                     "type": "string",
                     "example": "text"
                 },
+                "read_at": {
+                    "type": "integer",
+                    "example": 1704067200
+                },
+                "receiver_id": {
+                    "type": "string",
+                    "example": "987654321"
+                },
                 "sender_id": {
                     "type": "string",
                     "example": "123456789"
                 },
-                "sender_name": {
-                    "type": "string",
-                    "example": "sender"
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1704067200
                 }
             }
         },
-        "handler.OfflineMessagesResponse": {
+        "services_gateway_handler.OfflineMessagesResponse": {
             "type": "object",
             "properties": {
                 "messages": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.OfflineMessageInfo"
+                        "$ref": "#/definitions/services_gateway_handler.MessageInfo"
                     }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
-        "handler.RegisterRequest": {
+        "services_gateway_handler.RegisterRequest": {
             "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password",
+                "tele"
+            ],
             "properties": {
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
                 },
-                "nickname": {
+                "id": {
                     "type": "string",
-                    "example": "Test User"
+                    "example": "user123"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "testuser"
                 },
                 "password": {
                     "type": "string",
                     "example": "password123"
                 },
-                "username": {
+                "tele": {
                     "type": "string",
-                    "example": "testuser"
+                    "example": "13800138000"
                 }
             }
         },
-        "handler.RegisterResponse": {
+        "services_gateway_handler.RegisterResponse": {
             "type": "object",
             "properties": {
-                "email": {
+                "name": {
                     "type": "string",
-                    "example": "user@example.com"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "Test User"
+                    "example": "testuser"
                 },
                 "user_id": {
                     "type": "string",
                     "example": "123456789"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "testuser"
                 }
             }
         },
-        "handler.RemoveFriendResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "handler.RemoveGroupMemberResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "handler.ReplyFriendRequestBody": {
+        "services_gateway_handler.ReplyFriendRequestBody": {
             "type": "object",
             "properties": {
                 "accept": {
@@ -1537,20 +1532,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.ReplyFriendResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "example": "accepted"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "handler.ReplyGroupJoinRequestBody": {
+        "services_gateway_handler.ReplyGroupJoinRequestBody": {
             "type": "object",
             "properties": {
                 "accept": {
@@ -1559,21 +1541,13 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.ReplyGroupJoinResponse": {
+        "services_gateway_handler.SendMessageRequest": {
             "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "example": "accepted"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "handler.SendMessageRequest": {
-            "type": "object",
+            "required": [
+                "content",
+                "msg_type",
+                "receiver_id"
+            ],
             "properties": {
                 "content": {
                     "type": "string",
@@ -1586,84 +1560,87 @@ const docTemplate = `{
                 "receiver_id": {
                     "type": "string",
                     "example": "123456"
+                },
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1704067200
                 }
             }
         },
-        "handler.SendMessageResponse": {
+        "services_gateway_handler.SendMessageResponse": {
             "type": "object",
             "properties": {
-                "content": {
-                    "type": "string",
-                    "example": "你好"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                },
                 "msg_id": {
                     "type": "string",
                     "example": "msg123456"
                 },
-                "msg_type": {
-                    "type": "string",
-                    "example": "text"
+                "success": {
+                    "type": "boolean",
+                    "example": true
                 },
-                "receiver_id": {
-                    "type": "string",
-                    "example": "987654321"
-                },
-                "sender_id": {
-                    "type": "string",
-                    "example": "123456789"
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1704067200
                 }
             }
         },
-        "handler.UnreadCountResponse": {
+        "services_gateway_handler.UnreadCountResponse": {
             "type": "object",
             "properties": {
                 "count": {
                     "type": "integer",
                     "example": 5
+                },
+                "group_counts": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
                 }
             }
         },
-        "handler.UserGroupsResponse": {
+        "services_gateway_handler.UserGroupsResponse": {
             "type": "object",
             "properties": {
                 "groups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.GroupInfo"
+                        "$ref": "#/definitions/services_gateway_handler.GroupInfo"
                     }
                 }
             }
         },
-        "handler.UserInfo": {
+        "services_gateway_handler.UserInfo": {
             "type": "object",
             "properties": {
-                "avatar": {
+                "avatar_url": {
                     "type": "string",
                     "example": "https://example.com/avatar.jpg"
                 },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                "created_at": {
+                    "type": "integer",
+                    "example": 1704067200
                 },
-                "nickname": {
+                "id": {
                     "type": "string",
-                    "example": "Test User"
+                    "example": "123456789"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "testuser"
                 },
                 "status": {
                     "type": "integer",
                     "example": 1
                 },
-                "user_id": {
+                "tele": {
                     "type": "string",
-                    "example": "123456789"
+                    "example": "13800138000"
                 },
-                "username": {
-                    "type": "string",
-                    "example": "testuser"
+                "updated_at": {
+                    "type": "integer",
+                    "example": 1704067200
                 }
             }
         }
