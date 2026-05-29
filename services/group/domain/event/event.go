@@ -61,7 +61,12 @@ type MemberLeftEvent struct {
 	GroupID string
 	UserID  string
 }
-
+type ChangedEvent struct {
+	BaseEvent
+	GroupID string
+	UserID  string
+	AdminID string
+}
 type MemberRemovedEvent struct {
 	BaseEvent
 	GroupID string

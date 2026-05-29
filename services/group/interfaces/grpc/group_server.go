@@ -4,6 +4,7 @@ import (
 	common "IM/api/gen/common"
 	"IM/api/gen/group"
 	service "IM/services/group/application"
+	"IM/services/group/domain/entity"
 	"context"
 )
 
@@ -108,7 +109,7 @@ func (s *GroupServer) GetMembers(ctx context.Context, req *group.GetMembersReque
 	for i, m := range members {
 		pbMembers[i] = &group.MemberInfo{
 			UserId:   m.UserID,
-			Role:     int32(m.Role),
+			Role:     group.MemberRole(m.Role),
 			JoinedAt: m.JoinedAt.Unix(),
 		}
 	}
@@ -117,9 +118,22 @@ func (s *GroupServer) GetMembers(ctx context.Context, req *group.GetMembersReque
 		Members: pbMembers,
 	}, nil
 }
+func (s *GroupServer) ChangeMember(ctx context.Context, req *group.ChangeMemberRequest) (*common.Response, error) {
+	err := s.groupSvc.ChangeMember(ctx, req.GroupId, req.OwnerId, req.MemberId, entity.MemberRole(req.Role))
+	if err != nil {
+		return &common.Response{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
 
+	return &common.Response{
+		Success: true,
+		Message: "member changed",
+	}, nil
+}
 func (s *GroupServer) RemoveMember(ctx context.Context, req *group.RemoveMemberRequest) (*common.Response, error) {
-	err := s.groupSvc.RemoveMember(ctx, req.GroupId, req.OwnerId, req.MemberId)
+	err := s.groupSvc.RemoveMember(ctx, req.GroupId, req.AdminId, req.MemberId)
 	if err != nil {
 		return &common.Response{
 			Success: false,

@@ -343,7 +343,6 @@ func (s *GroupService) RejectJoinRequest(ctx context.Context, requestID, ownerID
 	logger.Infow("RejectJoinRequest: rejected", "component", "group_service", "request_id", requestID)
 	return
 }
-
 func (s *GroupService) GetMembers(ctx context.Context, groupID string) (res []*entity.GroupMember, err error) {
 	done := logger.StartStep("GroupService.GetMembers", "group_id", groupID)
 	defer func() { done(err) }()
@@ -352,6 +351,47 @@ func (s *GroupService) GetMembers(ctx context.Context, groupID string) (res []*e
 	if err == nil {
 		logger.Infow("GetMembers: retrieved", "component", "group_service", "group_id", groupID, "count", len(res))
 	}
+	return
+}
+
+func (s *GroupService) ChangeMember(ctx context.Context, groupID, ownerID, memberID string, role entity.MemberRole) (err error) {
+	done := logger.StartStep("GroupService.ChangeMember", "group_id", groupID, "owner", ownerID, "member", memberID)
+	defer func() { done(err) }()
+
+	_, err = s.groupRepo.GetByID(ctx, groupID)
+	if err != nil {
+		err = ErrGroupNotFound
+		return
+	}
+
+	var member *entity.GroupMember
+	member, err = s.groupMemberRepo.GetByGroupAndUserID(ctx, groupID, ownerID)
+	if err != nil {
+		err = ErrNotMember
+		return
+	}
+
+	if member.IsOwner() {
+		err = ErrCannotRemoveOwner
+		return
+	}
+
+	if err = s.groupMemberRepo.UpdateRole(ctx, groupID, memberID, role); err != nil {
+		return
+	}
+
+	s.eventPublisher.Publish(&event.MemberRemovedEvent{
+		BaseEvent: event.BaseEvent{
+			EventType:   "Member_Role_Changed",
+			OccurredAt:  time.Now(),
+			AggregateID: groupID,
+		},
+		GroupID: groupID,
+		UserID:  memberID,
+		AdminID: ownerID,
+	})
+
+	logger.Infow("ChangeMember: changed", "component", "group_service", "group_id", groupID, "member", memberID)
 	return
 }
 

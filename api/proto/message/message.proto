@@ -6,17 +6,6 @@ option go_package = "IM/api/gen/message;message";
 
 import "common/common.proto";
 
-service MessageService {
-    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
-    rpc GetMessage(GetMessageRequest) returns (MessageInfo);
-    rpc GetOfflineMessages(GetOfflineMessagesRequest) returns (GetOfflineMessagesResponse);
-    rpc GetHistoryMessages(GetHistoryMessagesRequest) returns (GetHistoryMessagesResponse);
-    rpc MarkAsRead(MarkAsReadRequest) returns (common.Response);
-    rpc MarkAllAsRead(MarkAllAsReadRequest) returns (common.Response);
-    rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse);
-    rpc GetOnlineStatus(GetOnlineStatusRequest) returns (GetOnlineStatusResponse);
-    rpc RevokeMessage(RevokeMessageRequest) returns (common.Response);
-}
 
 message SendMessageRequest {
     string sender_id = 1;
@@ -112,4 +101,16 @@ message PushMessage {
     string msg_type = 5;
     int64 timestamp = 6;
     bool is_group = 7;
+}
+
+service MessageService {
+    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+    rpc GetMessage(GetMessageRequest) returns (MessageInfo);
+    rpc GetOfflineMessages(GetOfflineMessagesRequest) returns (GetOfflineMessagesResponse);
+    rpc GetHistoryMessages(GetHistoryMessagesRequest) returns (GetHistoryMessagesResponse);
+    rpc MarkAsRead(MarkAsReadRequest) returns (common.Response);
+    rpc MarkAllAsRead(MarkAllAsReadRequest) returns (common.Response);
+    rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse);
+    rpc GetOnlineStatus(GetOnlineStatusRequest) returns (GetOnlineStatusResponse);
+    rpc RevokeMessage(RevokeMessageRequest) returns (common.Response);
 }

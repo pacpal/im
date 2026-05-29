@@ -118,18 +118,13 @@ func AddFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 func RemoveFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			FriendID string `json:"friend_id"`
-		}
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
+		friendID := c.Param("friend_id")
 		userID, _ := c.Get("user_id")
 		ctx := c.Request.Context()
 
 		resp, err := p.UserClient().RemoveFriend(ctx, &user.RemoveFriendRequest{
 			UserId:   userID.(string),
-			TargetId: req.FriendID,
+			TargetId: friendID,
 		})
 		if err != nil {
 			c.Error(err)
@@ -140,12 +135,12 @@ func RemoveFriend(p *proxy.ServiceProxy) gin.HandlerFunc {
 	}
 }
 
-// AcceptFriendRequest 接受或拒绝好友请求。
-func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
+// ReplyFriendRequest 接受或拒绝好友请求。
+func ReplyFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		requestID := c.Param("request_id")
 		var req struct {
-			RequestID string `json:"request_id"`
-			Accept    bool   `json:"accept"`
+			Accept bool `json:"accept"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -157,7 +152,7 @@ func AcceptFriendRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		resp, err := p.UserClient().ReplyFriend(ctx, &user.ReplyFriendRequest{
 			UserId:    userID.(string),
-			RequestId: req.RequestID,
+			RequestId: requestID,
 			Accept:    req.Accept,
 		})
 		if err != nil {
@@ -245,12 +240,41 @@ func GetGroupMembers(p *proxy.ServiceProxy) gin.HandlerFunc {
 		c.JSON(http.StatusOK, resp)
 	}
 }
+func ChangeGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			Role int32 `json:"role"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		ownerID, _ := c.Get("user_id")
+		groupID := c.Param("id")
+		memberID := c.Param("member_id")
+		ctx := c.Request.Context()
+
+		resp, err := p.GroupClient().ChangeMember(ctx, &group.ChangeMemberRequest{
+			GroupId:  groupID,
+			OwnerId:  ownerID.(string),
+			MemberId: memberID,
+			Role:     group.MemberRole(req.Role),
+		})
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, resp)
+	}
+}
 func RemoveGroupMember(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("id")
+		memberID := c.Param("member_id")
 		ctx := c.Request.Context()
 
-		resp, err := p.GroupClient().RemoveMember(ctx, &group.RemoveMemberRequest{GroupId: groupID})
+		resp, err := p.GroupClient().RemoveMember(ctx, &group.RemoveMemberRequest{GroupId: groupID, MemberId: memberID})
 		if err != nil {
 			c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -333,9 +357,9 @@ func GetPendingGroupJoinRequests(p *proxy.ServiceProxy) gin.HandlerFunc {
 // ReplyGroupJoinRequest 群主接受或拒绝加入群组的请求。
 func ReplyGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		requestID := c.Param("request_id")
 		var req struct {
-			GroupID string `json:"group_id"`
-			Accept  bool   `json:"accept"`
+			Accept bool `json:"accept"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -346,7 +370,7 @@ func ReplyGroupJoinRequest(p *proxy.ServiceProxy) gin.HandlerFunc {
 
 		resp, err := p.GroupClient().ReplyGroupJoin(ctx, &group.ReplyGroupJoinRequest{
 			OwnerId:   userID.(string),
-			RequestId: req.GroupID,
+			RequestId: requestID,
 			Accept:    req.Accept,
 		})
 		if err != nil {

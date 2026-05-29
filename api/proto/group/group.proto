@@ -6,6 +6,13 @@ option go_package = "IM/api/gen/group;group";
 
 import "common/common.proto";
 
+enum MemberRole {
+    MEMBER_ROLE_UNSPECIFIED = 0;
+    MEMBER_ROLE_MEMBER = 1;
+    MEMBER_ROLE_ADMIN = 2;
+    MEMBER_ROLE_OWNER = 3;
+}
+
 message CreateGroupRequest {
     string owner_id = 1;
     string name = 2;
@@ -72,7 +79,7 @@ message MemberInfo {
     string user_id = 1;
     string name = 2;
     string avatar_url = 3;
-    int32 role = 4;
+    MemberRole role = 4;
     int64 joined_at = 5;
     string nickname = 6;
 }
@@ -83,8 +90,15 @@ message GetMembersResponse {
 
 message RemoveMemberRequest {
     string group_id = 1;
+    string admin_id = 2;
+    string member_id = 3;
+}
+
+message ChangeMemberRequest {
+    string group_id = 1;
     string owner_id = 2;
     string member_id = 3;
+    MemberRole role = 4;
 }
 
 message GetUserGroupsRequest {
@@ -120,6 +134,7 @@ message TransferOwnerRequest {
     string owner_id = 2;
     string new_owner_id = 3;
 }
+
 service GroupService {
     rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
     rpc GetGroup(GetGroupRequest) returns (GroupInfo);
@@ -130,8 +145,8 @@ service GroupService {
     rpc ReplyGroupJoin(ReplyGroupJoinRequest) returns (common.Response);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
     rpc RemoveMember(RemoveMemberRequest) returns (common.Response);
+    rpc ChangeMember(ChangeMemberRequest) returns (common.Response);
     rpc GetUserGroups(GetUserGroupsRequest) returns (GetUserGroupsResponse);
     rpc GetPendingGroupRequests(GetPendingGroupRequestsRequest) returns (GetPendingGroupRequestsResponse);
     rpc TransferOwner(TransferOwnerRequest) returns (common.Response);
 }
-

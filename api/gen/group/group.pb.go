@@ -22,6 +22,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type MemberRole int32
+
+const (
+	MemberRole_MEMBER_ROLE_UNSPECIFIED MemberRole = 0
+	MemberRole_MEMBER_ROLE_MEMBER      MemberRole = 1
+	MemberRole_MEMBER_ROLE_ADMIN       MemberRole = 2
+	MemberRole_MEMBER_ROLE_OWNER       MemberRole = 3
+)
+
+// Enum value maps for MemberRole.
+var (
+	MemberRole_name = map[int32]string{
+		0: "MEMBER_ROLE_UNSPECIFIED",
+		1: "MEMBER_ROLE_MEMBER",
+		2: "MEMBER_ROLE_ADMIN",
+		3: "MEMBER_ROLE_OWNER",
+	}
+	MemberRole_value = map[string]int32{
+		"MEMBER_ROLE_UNSPECIFIED": 0,
+		"MEMBER_ROLE_MEMBER":      1,
+		"MEMBER_ROLE_ADMIN":       2,
+		"MEMBER_ROLE_OWNER":       3,
+	}
+)
+
+func (x MemberRole) Enum() *MemberRole {
+	p := new(MemberRole)
+	*p = x
+	return p
+}
+
+func (x MemberRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (MemberRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_group_group_proto_enumTypes[0].Descriptor()
+}
+
+func (MemberRole) Type() protoreflect.EnumType {
+	return &file_group_group_proto_enumTypes[0]
+}
+
+func (x MemberRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use MemberRole.Descriptor instead.
+func (MemberRole) EnumDescriptor() ([]byte, []int) {
+	return file_group_group_proto_rawDescGZIP(), []int{0}
+}
+
 type CreateGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OwnerId       string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
@@ -643,7 +695,7 @@ type MemberInfo struct {
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	AvatarUrl     string                 `protobuf:"bytes,3,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	Role          int32                  `protobuf:"varint,4,opt,name=role,proto3" json:"role,omitempty"`
+	Role          MemberRole             `protobuf:"varint,4,opt,name=role,proto3,enum=group.MemberRole" json:"role,omitempty"`
 	JoinedAt      int64                  `protobuf:"varint,5,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
 	Nickname      string                 `protobuf:"bytes,6,opt,name=nickname,proto3" json:"nickname,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -701,11 +753,11 @@ func (x *MemberInfo) GetAvatarUrl() string {
 	return ""
 }
 
-func (x *MemberInfo) GetRole() int32 {
+func (x *MemberInfo) GetRole() MemberRole {
 	if x != nil {
 		return x.Role
 	}
-	return 0
+	return MemberRole_MEMBER_ROLE_UNSPECIFIED
 }
 
 func (x *MemberInfo) GetJoinedAt() int64 {
@@ -769,7 +821,7 @@ func (x *GetMembersResponse) GetMembers() []*MemberInfo {
 type RemoveMemberRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	AdminId       string                 `protobuf:"bytes,2,opt,name=admin_id,json=adminId,proto3" json:"admin_id,omitempty"`
 	MemberId      string                 `protobuf:"bytes,3,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -812,9 +864,9 @@ func (x *RemoveMemberRequest) GetGroupId() string {
 	return ""
 }
 
-func (x *RemoveMemberRequest) GetOwnerId() string {
+func (x *RemoveMemberRequest) GetAdminId() string {
 	if x != nil {
-		return x.OwnerId
+		return x.AdminId
 	}
 	return ""
 }
@@ -826,6 +878,74 @@ func (x *RemoveMemberRequest) GetMemberId() string {
 	return ""
 }
 
+type ChangeMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	MemberId      string                 `protobuf:"bytes,3,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	Role          MemberRole             `protobuf:"varint,4,opt,name=role,proto3,enum=group.MemberRole" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeMemberRequest) Reset() {
+	*x = ChangeMemberRequest{}
+	mi := &file_group_group_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeMemberRequest) ProtoMessage() {}
+
+func (x *ChangeMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_group_group_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeMemberRequest.ProtoReflect.Descriptor instead.
+func (*ChangeMemberRequest) Descriptor() ([]byte, []int) {
+	return file_group_group_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ChangeMemberRequest) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *ChangeMemberRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *ChangeMemberRequest) GetMemberId() string {
+	if x != nil {
+		return x.MemberId
+	}
+	return ""
+}
+
+func (x *ChangeMemberRequest) GetRole() MemberRole {
+	if x != nil {
+		return x.Role
+	}
+	return MemberRole_MEMBER_ROLE_UNSPECIFIED
+}
+
 type GetUserGroupsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -835,7 +955,7 @@ type GetUserGroupsRequest struct {
 
 func (x *GetUserGroupsRequest) Reset() {
 	*x = GetUserGroupsRequest{}
-	mi := &file_group_group_proto_msgTypes[13]
+	mi := &file_group_group_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -847,7 +967,7 @@ func (x *GetUserGroupsRequest) String() string {
 func (*GetUserGroupsRequest) ProtoMessage() {}
 
 func (x *GetUserGroupsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_group_group_proto_msgTypes[13]
+	mi := &file_group_group_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +980,7 @@ func (x *GetUserGroupsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserGroupsRequest.ProtoReflect.Descriptor instead.
 func (*GetUserGroupsRequest) Descriptor() ([]byte, []int) {
-	return file_group_group_proto_rawDescGZIP(), []int{13}
+	return file_group_group_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetUserGroupsRequest) GetUserId() string {
@@ -879,7 +999,7 @@ type GetUserGroupsResponse struct {
 
 func (x *GetUserGroupsResponse) Reset() {
 	*x = GetUserGroupsResponse{}
-	mi := &file_group_group_proto_msgTypes[14]
+	mi := &file_group_group_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -891,7 +1011,7 @@ func (x *GetUserGroupsResponse) String() string {
 func (*GetUserGroupsResponse) ProtoMessage() {}
 
 func (x *GetUserGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_group_group_proto_msgTypes[14]
+	mi := &file_group_group_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -904,7 +1024,7 @@ func (x *GetUserGroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserGroupsResponse.ProtoReflect.Descriptor instead.
 func (*GetUserGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_group_group_proto_rawDescGZIP(), []int{14}
+	return file_group_group_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetUserGroupsResponse) GetGroups() []*GroupInfo {
@@ -924,7 +1044,7 @@ type GetPendingGroupRequestsRequest struct {
 
 func (x *GetPendingGroupRequestsRequest) Reset() {
 	*x = GetPendingGroupRequestsRequest{}
-	mi := &file_group_group_proto_msgTypes[15]
+	mi := &file_group_group_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -936,7 +1056,7 @@ func (x *GetPendingGroupRequestsRequest) String() string {
 func (*GetPendingGroupRequestsRequest) ProtoMessage() {}
 
 func (x *GetPendingGroupRequestsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_group_group_proto_msgTypes[15]
+	mi := &file_group_group_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -949,7 +1069,7 @@ func (x *GetPendingGroupRequestsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPendingGroupRequestsRequest.ProtoReflect.Descriptor instead.
 func (*GetPendingGroupRequestsRequest) Descriptor() ([]byte, []int) {
-	return file_group_group_proto_rawDescGZIP(), []int{15}
+	return file_group_group_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetPendingGroupRequestsRequest) GetGroupId() string {
@@ -982,7 +1102,7 @@ type GroupJoinRequestInfo struct {
 
 func (x *GroupJoinRequestInfo) Reset() {
 	*x = GroupJoinRequestInfo{}
-	mi := &file_group_group_proto_msgTypes[16]
+	mi := &file_group_group_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -994,7 +1114,7 @@ func (x *GroupJoinRequestInfo) String() string {
 func (*GroupJoinRequestInfo) ProtoMessage() {}
 
 func (x *GroupJoinRequestInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_group_group_proto_msgTypes[16]
+	mi := &file_group_group_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1007,7 +1127,7 @@ func (x *GroupJoinRequestInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupJoinRequestInfo.ProtoReflect.Descriptor instead.
 func (*GroupJoinRequestInfo) Descriptor() ([]byte, []int) {
-	return file_group_group_proto_rawDescGZIP(), []int{16}
+	return file_group_group_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GroupJoinRequestInfo) GetId() string {
@@ -1075,7 +1195,7 @@ type GetPendingGroupRequestsResponse struct {
 
 func (x *GetPendingGroupRequestsResponse) Reset() {
 	*x = GetPendingGroupRequestsResponse{}
-	mi := &file_group_group_proto_msgTypes[17]
+	mi := &file_group_group_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1087,7 +1207,7 @@ func (x *GetPendingGroupRequestsResponse) String() string {
 func (*GetPendingGroupRequestsResponse) ProtoMessage() {}
 
 func (x *GetPendingGroupRequestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_group_group_proto_msgTypes[17]
+	mi := &file_group_group_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1100,7 +1220,7 @@ func (x *GetPendingGroupRequestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPendingGroupRequestsResponse.ProtoReflect.Descriptor instead.
 func (*GetPendingGroupRequestsResponse) Descriptor() ([]byte, []int) {
-	return file_group_group_proto_rawDescGZIP(), []int{17}
+	return file_group_group_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetPendingGroupRequestsResponse) GetRequests() []*GroupJoinRequestInfo {
@@ -1121,7 +1241,7 @@ type TransferOwnerRequest struct {
 
 func (x *TransferOwnerRequest) Reset() {
 	*x = TransferOwnerRequest{}
-	mi := &file_group_group_proto_msgTypes[18]
+	mi := &file_group_group_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1133,7 +1253,7 @@ func (x *TransferOwnerRequest) String() string {
 func (*TransferOwnerRequest) ProtoMessage() {}
 
 func (x *TransferOwnerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_group_group_proto_msgTypes[18]
+	mi := &file_group_group_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1146,7 +1266,7 @@ func (x *TransferOwnerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferOwnerRequest.ProtoReflect.Descriptor instead.
 func (*TransferOwnerRequest) Descriptor() ([]byte, []int) {
-	return file_group_group_proto_rawDescGZIP(), []int{18}
+	return file_group_group_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TransferOwnerRequest) GetGroupId() string {
@@ -1219,22 +1339,27 @@ const file_group_group_proto_rawDesc = "" +
 	"request_id\x18\x02 \x01(\tR\trequestId\x12\x16\n" +
 	"\x06accept\x18\x03 \x01(\bR\x06accept\".\n" +
 	"\x11GetMembersRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\"\xa5\x01\n" +
+	"\bgroup_id\x18\x01 \x01(\tR\agroupId\"\xb8\x01\n" +
 	"\n" +
 	"MemberInfo\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x03 \x01(\tR\tavatarUrl\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\x05R\x04role\x12\x1b\n" +
+	"avatar_url\x18\x03 \x01(\tR\tavatarUrl\x12%\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x11.group.MemberRoleR\x04role\x12\x1b\n" +
 	"\tjoined_at\x18\x05 \x01(\x03R\bjoinedAt\x12\x1a\n" +
 	"\bnickname\x18\x06 \x01(\tR\bnickname\"A\n" +
 	"\x12GetMembersResponse\x12+\n" +
 	"\amembers\x18\x01 \x03(\v2\x11.group.MemberInfoR\amembers\"h\n" +
 	"\x13RemoveMemberRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x19\n" +
+	"\badmin_id\x18\x02 \x01(\tR\aadminId\x12\x1b\n" +
+	"\tmember_id\x18\x03 \x01(\tR\bmemberId\"\x8f\x01\n" +
+	"\x13ChangeMemberRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x19\n" +
 	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12\x1b\n" +
-	"\tmember_id\x18\x03 \x01(\tR\bmemberId\"/\n" +
+	"\tmember_id\x18\x03 \x01(\tR\bmemberId\x12%\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x11.group.MemberRoleR\x04role\"/\n" +
 	"\x14GetUserGroupsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"A\n" +
 	"\x15GetUserGroupsResponse\x12(\n" +
@@ -1259,7 +1384,13 @@ const file_group_group_proto_rawDesc = "" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x19\n" +
 	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12 \n" +
 	"\fnew_owner_id\x18\x03 \x01(\tR\n" +
-	"newOwnerId2\xad\x06\n" +
+	"newOwnerId*o\n" +
+	"\n" +
+	"MemberRole\x12\x1b\n" +
+	"\x17MEMBER_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12MEMBER_ROLE_MEMBER\x10\x01\x12\x15\n" +
+	"\x11MEMBER_ROLE_ADMIN\x10\x02\x12\x15\n" +
+	"\x11MEMBER_ROLE_OWNER\x10\x032\xeb\x06\n" +
 	"\fGroupService\x12D\n" +
 	"\vCreateGroup\x12\x19.group.CreateGroupRequest\x1a\x1a.group.CreateGroupResponse\x124\n" +
 	"\bGetGroup\x12\x16.group.GetGroupRequest\x1a\x10.group.GroupInfo\x12:\n" +
@@ -1271,7 +1402,8 @@ const file_group_group_proto_rawDesc = "" +
 	"\x0eReplyGroupJoin\x12\x1c.group.ReplyGroupJoinRequest\x1a\x10.common.Response\x12A\n" +
 	"\n" +
 	"GetMembers\x12\x18.group.GetMembersRequest\x1a\x19.group.GetMembersResponse\x12<\n" +
-	"\fRemoveMember\x12\x1a.group.RemoveMemberRequest\x1a\x10.common.Response\x12J\n" +
+	"\fRemoveMember\x12\x1a.group.RemoveMemberRequest\x1a\x10.common.Response\x12<\n" +
+	"\fChangeMember\x12\x1a.group.ChangeMemberRequest\x1a\x10.common.Response\x12J\n" +
 	"\rGetUserGroups\x12\x1b.group.GetUserGroupsRequest\x1a\x1c.group.GetUserGroupsResponse\x12h\n" +
 	"\x17GetPendingGroupRequests\x12%.group.GetPendingGroupRequestsRequest\x1a&.group.GetPendingGroupRequestsResponse\x12>\n" +
 	"\rTransferOwner\x12\x1b.group.TransferOwnerRequest\x1a\x10.common.ResponseB\x18Z\x16IM/api/gen/group;groupb\x06proto3"
@@ -1288,62 +1420,69 @@ func file_group_group_proto_rawDescGZIP() []byte {
 	return file_group_group_proto_rawDescData
 }
 
-var file_group_group_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_group_group_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_group_group_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_group_group_proto_goTypes = []any{
-	(*CreateGroupRequest)(nil),              // 0: group.CreateGroupRequest
-	(*CreateGroupResponse)(nil),             // 1: group.CreateGroupResponse
-	(*GetGroupRequest)(nil),                 // 2: group.GetGroupRequest
-	(*GroupInfo)(nil),                       // 3: group.GroupInfo
-	(*UpdateGroupRequest)(nil),              // 4: group.UpdateGroupRequest
-	(*DeleteGroupRequest)(nil),              // 5: group.DeleteGroupRequest
-	(*JoinGroupRequest)(nil),                // 6: group.JoinGroupRequest
-	(*LeaveGroupRequest)(nil),               // 7: group.LeaveGroupRequest
-	(*ReplyGroupJoinRequest)(nil),           // 8: group.ReplyGroupJoinRequest
-	(*GetMembersRequest)(nil),               // 9: group.GetMembersRequest
-	(*MemberInfo)(nil),                      // 10: group.MemberInfo
-	(*GetMembersResponse)(nil),              // 11: group.GetMembersResponse
-	(*RemoveMemberRequest)(nil),             // 12: group.RemoveMemberRequest
-	(*GetUserGroupsRequest)(nil),            // 13: group.GetUserGroupsRequest
-	(*GetUserGroupsResponse)(nil),           // 14: group.GetUserGroupsResponse
-	(*GetPendingGroupRequestsRequest)(nil),  // 15: group.GetPendingGroupRequestsRequest
-	(*GroupJoinRequestInfo)(nil),            // 16: group.GroupJoinRequestInfo
-	(*GetPendingGroupRequestsResponse)(nil), // 17: group.GetPendingGroupRequestsResponse
-	(*TransferOwnerRequest)(nil),            // 18: group.TransferOwnerRequest
-	(*common.Response)(nil),                 // 19: common.Response
+	(MemberRole)(0),                         // 0: group.MemberRole
+	(*CreateGroupRequest)(nil),              // 1: group.CreateGroupRequest
+	(*CreateGroupResponse)(nil),             // 2: group.CreateGroupResponse
+	(*GetGroupRequest)(nil),                 // 3: group.GetGroupRequest
+	(*GroupInfo)(nil),                       // 4: group.GroupInfo
+	(*UpdateGroupRequest)(nil),              // 5: group.UpdateGroupRequest
+	(*DeleteGroupRequest)(nil),              // 6: group.DeleteGroupRequest
+	(*JoinGroupRequest)(nil),                // 7: group.JoinGroupRequest
+	(*LeaveGroupRequest)(nil),               // 8: group.LeaveGroupRequest
+	(*ReplyGroupJoinRequest)(nil),           // 9: group.ReplyGroupJoinRequest
+	(*GetMembersRequest)(nil),               // 10: group.GetMembersRequest
+	(*MemberInfo)(nil),                      // 11: group.MemberInfo
+	(*GetMembersResponse)(nil),              // 12: group.GetMembersResponse
+	(*RemoveMemberRequest)(nil),             // 13: group.RemoveMemberRequest
+	(*ChangeMemberRequest)(nil),             // 14: group.ChangeMemberRequest
+	(*GetUserGroupsRequest)(nil),            // 15: group.GetUserGroupsRequest
+	(*GetUserGroupsResponse)(nil),           // 16: group.GetUserGroupsResponse
+	(*GetPendingGroupRequestsRequest)(nil),  // 17: group.GetPendingGroupRequestsRequest
+	(*GroupJoinRequestInfo)(nil),            // 18: group.GroupJoinRequestInfo
+	(*GetPendingGroupRequestsResponse)(nil), // 19: group.GetPendingGroupRequestsResponse
+	(*TransferOwnerRequest)(nil),            // 20: group.TransferOwnerRequest
+	(*common.Response)(nil),                 // 21: common.Response
 }
 var file_group_group_proto_depIdxs = []int32{
-	10, // 0: group.GetMembersResponse.members:type_name -> group.MemberInfo
-	3,  // 1: group.GetUserGroupsResponse.groups:type_name -> group.GroupInfo
-	16, // 2: group.GetPendingGroupRequestsResponse.requests:type_name -> group.GroupJoinRequestInfo
-	0,  // 3: group.GroupService.CreateGroup:input_type -> group.CreateGroupRequest
-	2,  // 4: group.GroupService.GetGroup:input_type -> group.GetGroupRequest
-	4,  // 5: group.GroupService.UpdateGroup:input_type -> group.UpdateGroupRequest
-	5,  // 6: group.GroupService.DeleteGroup:input_type -> group.DeleteGroupRequest
-	6,  // 7: group.GroupService.JoinGroup:input_type -> group.JoinGroupRequest
-	7,  // 8: group.GroupService.LeaveGroup:input_type -> group.LeaveGroupRequest
-	8,  // 9: group.GroupService.ReplyGroupJoin:input_type -> group.ReplyGroupJoinRequest
-	9,  // 10: group.GroupService.GetMembers:input_type -> group.GetMembersRequest
-	12, // 11: group.GroupService.RemoveMember:input_type -> group.RemoveMemberRequest
-	13, // 12: group.GroupService.GetUserGroups:input_type -> group.GetUserGroupsRequest
-	15, // 13: group.GroupService.GetPendingGroupRequests:input_type -> group.GetPendingGroupRequestsRequest
-	18, // 14: group.GroupService.TransferOwner:input_type -> group.TransferOwnerRequest
-	1,  // 15: group.GroupService.CreateGroup:output_type -> group.CreateGroupResponse
-	3,  // 16: group.GroupService.GetGroup:output_type -> group.GroupInfo
-	19, // 17: group.GroupService.UpdateGroup:output_type -> common.Response
-	19, // 18: group.GroupService.DeleteGroup:output_type -> common.Response
-	19, // 19: group.GroupService.JoinGroup:output_type -> common.Response
-	19, // 20: group.GroupService.LeaveGroup:output_type -> common.Response
-	19, // 21: group.GroupService.ReplyGroupJoin:output_type -> common.Response
-	11, // 22: group.GroupService.GetMembers:output_type -> group.GetMembersResponse
-	19, // 23: group.GroupService.RemoveMember:output_type -> common.Response
-	14, // 24: group.GroupService.GetUserGroups:output_type -> group.GetUserGroupsResponse
-	17, // 25: group.GroupService.GetPendingGroupRequests:output_type -> group.GetPendingGroupRequestsResponse
-	19, // 26: group.GroupService.TransferOwner:output_type -> common.Response
-	15, // [15:27] is the sub-list for method output_type
-	3,  // [3:15] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	0,  // 0: group.MemberInfo.role:type_name -> group.MemberRole
+	11, // 1: group.GetMembersResponse.members:type_name -> group.MemberInfo
+	0,  // 2: group.ChangeMemberRequest.role:type_name -> group.MemberRole
+	4,  // 3: group.GetUserGroupsResponse.groups:type_name -> group.GroupInfo
+	18, // 4: group.GetPendingGroupRequestsResponse.requests:type_name -> group.GroupJoinRequestInfo
+	1,  // 5: group.GroupService.CreateGroup:input_type -> group.CreateGroupRequest
+	3,  // 6: group.GroupService.GetGroup:input_type -> group.GetGroupRequest
+	5,  // 7: group.GroupService.UpdateGroup:input_type -> group.UpdateGroupRequest
+	6,  // 8: group.GroupService.DeleteGroup:input_type -> group.DeleteGroupRequest
+	7,  // 9: group.GroupService.JoinGroup:input_type -> group.JoinGroupRequest
+	8,  // 10: group.GroupService.LeaveGroup:input_type -> group.LeaveGroupRequest
+	9,  // 11: group.GroupService.ReplyGroupJoin:input_type -> group.ReplyGroupJoinRequest
+	10, // 12: group.GroupService.GetMembers:input_type -> group.GetMembersRequest
+	13, // 13: group.GroupService.RemoveMember:input_type -> group.RemoveMemberRequest
+	14, // 14: group.GroupService.ChangeMember:input_type -> group.ChangeMemberRequest
+	15, // 15: group.GroupService.GetUserGroups:input_type -> group.GetUserGroupsRequest
+	17, // 16: group.GroupService.GetPendingGroupRequests:input_type -> group.GetPendingGroupRequestsRequest
+	20, // 17: group.GroupService.TransferOwner:input_type -> group.TransferOwnerRequest
+	2,  // 18: group.GroupService.CreateGroup:output_type -> group.CreateGroupResponse
+	4,  // 19: group.GroupService.GetGroup:output_type -> group.GroupInfo
+	21, // 20: group.GroupService.UpdateGroup:output_type -> common.Response
+	21, // 21: group.GroupService.DeleteGroup:output_type -> common.Response
+	21, // 22: group.GroupService.JoinGroup:output_type -> common.Response
+	21, // 23: group.GroupService.LeaveGroup:output_type -> common.Response
+	21, // 24: group.GroupService.ReplyGroupJoin:output_type -> common.Response
+	12, // 25: group.GroupService.GetMembers:output_type -> group.GetMembersResponse
+	21, // 26: group.GroupService.RemoveMember:output_type -> common.Response
+	21, // 27: group.GroupService.ChangeMember:output_type -> common.Response
+	16, // 28: group.GroupService.GetUserGroups:output_type -> group.GetUserGroupsResponse
+	19, // 29: group.GroupService.GetPendingGroupRequests:output_type -> group.GetPendingGroupRequestsResponse
+	21, // 30: group.GroupService.TransferOwner:output_type -> common.Response
+	18, // [18:31] is the sub-list for method output_type
+	5,  // [5:18] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_group_group_proto_init() }
@@ -1356,13 +1495,14 @@ func file_group_group_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_group_group_proto_rawDesc), len(file_group_group_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   19,
+			NumEnums:      1,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_group_group_proto_goTypes,
 		DependencyIndexes: file_group_group_proto_depIdxs,
+		EnumInfos:         file_group_group_proto_enumTypes,
 		MessageInfos:      file_group_group_proto_msgTypes,
 	}.Build()
 	File_group_group_proto = out.File

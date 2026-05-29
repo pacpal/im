@@ -29,6 +29,7 @@ const (
 	GroupService_ReplyGroupJoin_FullMethodName          = "/group.GroupService/ReplyGroupJoin"
 	GroupService_GetMembers_FullMethodName              = "/group.GroupService/GetMembers"
 	GroupService_RemoveMember_FullMethodName            = "/group.GroupService/RemoveMember"
+	GroupService_ChangeMember_FullMethodName            = "/group.GroupService/ChangeMember"
 	GroupService_GetUserGroups_FullMethodName           = "/group.GroupService/GetUserGroups"
 	GroupService_GetPendingGroupRequests_FullMethodName = "/group.GroupService/GetPendingGroupRequests"
 	GroupService_TransferOwner_FullMethodName           = "/group.GroupService/TransferOwner"
@@ -47,6 +48,7 @@ type GroupServiceClient interface {
 	ReplyGroupJoin(ctx context.Context, in *ReplyGroupJoinRequest, opts ...grpc.CallOption) (*common.Response, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
 	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*common.Response, error)
+	ChangeMember(ctx context.Context, in *ChangeMemberRequest, opts ...grpc.CallOption) (*common.Response, error)
 	GetUserGroups(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GetUserGroupsResponse, error)
 	GetPendingGroupRequests(ctx context.Context, in *GetPendingGroupRequestsRequest, opts ...grpc.CallOption) (*GetPendingGroupRequestsResponse, error)
 	TransferOwner(ctx context.Context, in *TransferOwnerRequest, opts ...grpc.CallOption) (*common.Response, error)
@@ -150,6 +152,16 @@ func (c *groupServiceClient) RemoveMember(ctx context.Context, in *RemoveMemberR
 	return out, nil
 }
 
+func (c *groupServiceClient) ChangeMember(ctx context.Context, in *ChangeMemberRequest, opts ...grpc.CallOption) (*common.Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(common.Response)
+	err := c.cc.Invoke(ctx, GroupService_ChangeMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *groupServiceClient) GetUserGroups(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GetUserGroupsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetUserGroupsResponse)
@@ -193,6 +205,7 @@ type GroupServiceServer interface {
 	ReplyGroupJoin(context.Context, *ReplyGroupJoinRequest) (*common.Response, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
 	RemoveMember(context.Context, *RemoveMemberRequest) (*common.Response, error)
+	ChangeMember(context.Context, *ChangeMemberRequest) (*common.Response, error)
 	GetUserGroups(context.Context, *GetUserGroupsRequest) (*GetUserGroupsResponse, error)
 	GetPendingGroupRequests(context.Context, *GetPendingGroupRequestsRequest) (*GetPendingGroupRequestsResponse, error)
 	TransferOwner(context.Context, *TransferOwnerRequest) (*common.Response, error)
@@ -232,6 +245,9 @@ func (UnimplementedGroupServiceServer) GetMembers(context.Context, *GetMembersRe
 }
 func (UnimplementedGroupServiceServer) RemoveMember(context.Context, *RemoveMemberRequest) (*common.Response, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveMember not implemented")
+}
+func (UnimplementedGroupServiceServer) ChangeMember(context.Context, *ChangeMemberRequest) (*common.Response, error) {
+	return nil, status.Error(codes.Unimplemented, "method ChangeMember not implemented")
 }
 func (UnimplementedGroupServiceServer) GetUserGroups(context.Context, *GetUserGroupsRequest) (*GetUserGroupsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserGroups not implemented")
@@ -425,6 +441,24 @@ func _GroupService_RemoveMember_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GroupService_ChangeMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GroupServiceServer).ChangeMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GroupService_ChangeMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GroupServiceServer).ChangeMember(ctx, req.(*ChangeMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GroupService_GetUserGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUserGroupsRequest)
 	if err := dec(in); err != nil {
@@ -521,6 +555,10 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveMember",
 			Handler:    _GroupService_RemoveMember_Handler,
+		},
+		{
+			MethodName: "ChangeMember",
+			Handler:    _GroupService_ChangeMember_Handler,
 		},
 		{
 			MethodName: "GetUserGroups",

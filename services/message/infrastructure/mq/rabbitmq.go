@@ -1,4 +1,4 @@
-// Package mq 提供 message 服务使用的 RabbitMQ 封装。
+// Package mq 提供 message 服务使用的 RabbitMQ 封装，支持自动重连。
 package mq
 
 import (
@@ -7,52 +7,118 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	amqp091 "github.com/rabbitmq/amqp091-go"
 )
 
-// RabbitMQConnection 包装底层连接和通道，便于管理。
+// RabbitMQConnection 包装底层连接和通道，支持自动重连。
 type RabbitMQConnection struct {
-	conn *amqp091.Connection
-	ch   *amqp091.Channel
+	url      string
+	conn     *amqp091.Connection
+	ch       *amqp091.Channel
+	mu       sync.RWMutex
+	closed   bool
+	closeCh  chan struct{}
+	notifyCh <-chan *amqp091.Error
 }
 
 // NewRabbitMQConnection 连接到 RabbitMQ 并返回包装对象。
-func NewRabbitMQConnection(url string) (res *RabbitMQConnection, err error) {
-	done := logger.StartStep("mq.NewRabbitMQConnection", "url", url)
-	defer func() { done(err) }()
+func NewRabbitMQConnection(url string) (*RabbitMQConnection, error) {
+	r := &RabbitMQConnection{
+		url:     url,
+		closeCh: make(chan struct{}),
+	}
+	if err := r.connect(); err != nil {
+		return nil, err
+	}
+	go r.handleReconnect()
+	return r, nil
+}
 
-	conn, err := amqp091.Dial(url)
+func (r *RabbitMQConnection) connect() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	conn, err := amqp091.Dial(r.url)
 	if err != nil {
-		err = fmt.Errorf("failed to connect to RabbitMQ: %w", err)
-		return
+		return fmt.Errorf("failed to connect to RabbitMQ: %w", err)
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
-		err = fmt.Errorf("failed to open channel: %w", err)
-		return
+		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
-	res = &RabbitMQConnection{conn: conn, ch: ch}
-	return
+	r.conn = conn
+	r.ch = ch
+	r.notifyCh = conn.NotifyClose(make(chan *amqp091.Error, 1))
+	return nil
+}
+
+// handleReconnect 监听连接关闭事件，断开时自动重连。
+func (r *RabbitMQConnection) handleReconnect() {
+	for {
+		select {
+		case <-r.closeCh:
+			return
+		case err := <-r.notifyCh:
+			if err == nil {
+				return
+			}
+			logger.Warnw("RabbitMQ connection closed, reconnecting...", "component", "mq", "err", err)
+
+			r.mu.RLock()
+			closed := r.closed
+			r.mu.RUnlock()
+			if closed {
+				return
+			}
+
+			for i := 0; i < 10; i++ {
+				time.Sleep(time.Duration(i+1) * time.Second)
+				if err := r.connect(); err != nil {
+					logger.Warnw("RabbitMQ reconnect failed", "component", "mq", "err", err, "retry", i+1)
+					continue
+				}
+				logger.Infow("RabbitMQ reconnected successfully", "component", "mq")
+				break
+			}
+		}
+	}
 }
 
 // Close 关闭通道与连接。
 func (r *RabbitMQConnection) Close() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.closed = true
+	close(r.closeCh)
+
+	var errs []error
 	if r.ch != nil {
-		r.ch.Close()
+		if err := r.ch.Close(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	if r.conn != nil {
-		return r.conn.Close()
+		if err := r.conn.Close(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errs[0]
 	}
 	return nil
 }
 
-// GetChannel 返回底层 amqp Channel。
+// GetChannel 返回底层 amqp Channel（线程安全）。
 func (r *RabbitMQConnection) GetChannel() *amqp091.Channel {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.ch
 }
 
@@ -79,17 +145,27 @@ func (p *MessageProducer) PublishMessage(ctx context.Context, msg *entity.Messag
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	ch := p.conn.GetChannel()
+	if ch == nil {
+		return fmt.Errorf("channel is not available")
+	}
+
 	routingKey := "message." + msg.ReceiverID
-	return p.conn.ch.PublishWithContext(ctx,
+	err = ch.PublishWithContext(ctx,
 		p.exchange,
 		routingKey,
 		false,
 		false,
 		amqp091.Publishing{
-			ContentType: "application/json",
+			ContentType:  "application/json",
 			Body:        body,
+			DeliveryMode: amqp091.Persistent,
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to publish message: %w", err)
+	}
+	return nil
 }
 
 // MessageConsumer 从队列消费并调用 handler 处理消息。
@@ -107,7 +183,12 @@ func NewMessageConsumer(conn *RabbitMQConnection, queueName string) *MessageCons
 
 // Consume 开始消费队列并在后台协程调用 handler 处理消息，失败时根据返回值决定是否重排。
 func (c *MessageConsumer) Consume(ctx context.Context, handler func(*entity.Message) error) error {
-	msgs, err := c.conn.ch.Consume(
+	ch := c.conn.GetChannel()
+	if ch == nil {
+		return fmt.Errorf("channel is not available")
+	}
+
+	msgs, err := ch.Consume(
 		c.queueName,
 		"",
 		false,

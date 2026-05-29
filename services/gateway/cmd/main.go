@@ -97,33 +97,39 @@ func main() {
 	// API 路由表
 	api := router.Group("/api/v1")
 	{
-		api.POST("/auth/register", handler.Register(serviceProxy))
-		api.POST("/auth/login", handler.Login(serviceProxy, jwtUtil))
-		// 受保护路由
+		api.POST("/register", handler.Register(serviceProxy))    // 创建用户（注册）
+		api.POST("/login", handler.Login(serviceProxy, jwtUtil)) // 创建会话（登录）
+
 		protected := api.Group("")
 		protected.Use(middleware.Auth(jwtUtil))
 		{
+			// 用户相关
 			protected.GET("/users/:id", handler.GetUser(serviceProxy))
-			protected.GET("/users/friends", handler.GetFriends(serviceProxy))
-			protected.POST("/users/friends", handler.AddFriend(serviceProxy))
-			protected.DELETE("/users/friends/:friend_id", handler.RemoveFriend(serviceProxy))
-			protected.POST("/users/friend_requests/accept", handler.AcceptFriendRequest(serviceProxy))
-			protected.GET("/users/friend_requests", handler.GetPendingFriendRequests(serviceProxy))
 
+			// 好友系统
+			protected.GET("/friends", handler.GetFriends(serviceProxy))
+			protected.POST("/friends", handler.AddFriend(serviceProxy)) // 发送好友请求
+			protected.DELETE("/friends/:friend_id", handler.RemoveFriend(serviceProxy))
+			protected.GET("/friend_requests", handler.GetPendingFriendRequests(serviceProxy))
+			protected.PUT("/friend_requests/:request_id", handler.ReplyFriendRequest(serviceProxy))
+
+			// 群组系统
 			protected.POST("/groups", handler.CreateGroup(serviceProxy))
 			protected.GET("/groups/:id", handler.GetGroup(serviceProxy))
 			protected.GET("/groups/:id/members", handler.GetGroupMembers(serviceProxy))
+			protected.POST("/group/:id/members/:members_id", handler.ChangeGroupMember(serviceProxy))
 			protected.DELETE("/groups/:id/members/:member_id", handler.RemoveGroupMember(serviceProxy))
-			protected.GET("/users/groups", handler.GetUserGroups(serviceProxy))
-			protected.POST("/groups/join", handler.JoinGroup(serviceProxy))
-			protected.GET("/groups/join/requests", handler.GetPendingGroupJoinRequests(serviceProxy))
-			protected.GET("/groups/join/accept", handler.ReplyGroupJoinRequest(serviceProxy))
-			protected.DELETE("/groups/:id/leave", handler.LeaveGroup(serviceProxy))
+			protected.GET("/groups", handler.GetUserGroups(serviceProxy))      // 获取当前用户的群组列表
+			protected.POST("/group_requests", handler.JoinGroup(serviceProxy)) // 申请加入群组
+			protected.GET("/group_requests", handler.GetPendingGroupJoinRequests(serviceProxy))
+			protected.PUT("/group_requests/:request_id", handler.ReplyGroupJoinRequest(serviceProxy))
+			protected.DELETE("/groups/:id/members/me", handler.LeaveGroup(serviceProxy)) // 退出群组
 
+			// 消息系统
 			protected.POST("/messages", handler.SendMessage(serviceProxy))
 			protected.GET("/messages/offline", handler.GetOfflineMessages(serviceProxy))
 			protected.PUT("/messages/:id/read", handler.MarkAsRead(serviceProxy))
-			protected.PUT("/messages/read/all", handler.MarkAllAsRead(serviceProxy))
+			protected.PUT("/messages/read", handler.MarkAllAsRead(serviceProxy)) // 标记所有消息已读
 			protected.GET("/messages/unread/count", handler.GetUnreadCount(serviceProxy))
 		}
 	}
