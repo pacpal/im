@@ -18,9 +18,32 @@ import (
 	"syscall"
 	"time"
 
+	_ "IM/docs"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title IM 即时通讯系统 API
+// @version 1.0
+// @description IM 即时通讯系统 Gateway 服务 API 文档，包含用户认证、好友管理、群组管理、消息系统等接口。
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	// 加载配置
@@ -94,6 +117,8 @@ func main() {
 			"online_users": hub.OnlineCount(),
 		})
 	})
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// API 路由表
 	api := router.Group("/api/v1")
 	{
