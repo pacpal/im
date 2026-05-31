@@ -5,12 +5,13 @@ import (
 	"IM/api/gen/message"
 	"IM/pkg/config"
 	"IM/pkg/discovery"
+	pkgevent "IM/pkg/event"
 	"IM/pkg/id"
 	"IM/pkg/interceptor"
 	"IM/pkg/logger"
+	"IM/pkg/mq"
 	service "IM/services/message/application"
-	"IM/services/message/domain/event"
-	"IM/services/message/infrastructure/mq"
+	msgmq "IM/services/message/infrastructure/mq"
 	"IM/services/message/infrastructure/persistence"
 	grpcserver "IM/services/message/interfaces/grpc"
 	"context"
@@ -73,7 +74,7 @@ func main() {
 	defer redisClient.Close()
 
 	// 初始化 RabbitMQ 连接
-	rabbitMQ, err := mq.NewRabbitMQConnection(cfg.RabbitMQ.URL)
+	rabbitMQ, err := msgmq.NewRabbitMQConnection(cfg.RabbitMQ.URL)
 	if err != nil {
 		logger.Fatalw("Failed to connect to RabbitMQ", "component", "message_cmd", "err", err)
 	}
@@ -84,9 +85,23 @@ func main() {
 	// 初始化消息仓库
 	messageRepo := persistence.NewMessageRepository(mongoDB)
 	messageCache := persistence.NewMessageCache(redisClient)
-	messageProducer := mq.NewMessageProducer(rabbitMQ, cfg.RabbitMQ.Exchange)
+	messageProducer := msgmq.NewMessageProducer(rabbitMQ, cfg.RabbitMQ.Exchange)
 	// 初始化事件发布器
-	eventPublisher := event.NewEventPublisher()
+
+	mqConn, err := mq.NewConnection(cfg.RabbitMQ.URL)
+	if err != nil {
+		logger.Fatalw("Failed to connect to RabbitMQ for events", "component", "message_cmd", "err", err)
+	}
+	defer mqConn.Close()
+
+	rabbitPublisher, err := pkgevent.NewRabbitMQPublisher(mqConn, cfg.RabbitMQ.Exchange)
+	if err != nil {
+		logger.Fatalw("Failed to create rabbitmq publisher", "component", "message_cmd", "err", err)
+	}
+	defer rabbitPublisher.Close()
+
+	eventPublisher := pkgevent.NewEventBus(pkgevent.NewLocalEventBus(), rabbitPublisher)
+
 	messageService := service.NewMessageService(messageRepo, messageCache, messageProducer, idGenerator, eventPublisher)
 
 	// 初始化 gRPC 服务器

@@ -14,6 +14,7 @@ type Config struct {
 	Etcd     EtcdConfig     `yaml:"etcd"`
 	Database DatabaseConfig `yaml:"database"`
 	Redis    RedisConfig    `yaml:"redis"`
+	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
 	JWT      JWTConfig      `yaml:"jwt"`
 	Log      LogConfig      `yaml:"log"`
 }
@@ -204,6 +205,11 @@ func DefaultUserConfig() *Config {
 			Host: "localhost",
 			Port: "6379",
 		},
+		RabbitMQ: RabbitMQConfig{
+			URL:         "amqp://guest:guest@localhost:5672/",
+			Exchange:    "im_events",
+			QueuePrefix: "im_user_",
+		},
 		JWT: JWTConfig{
 			Secret: "your-secret-key",
 			Expire: 24 * time.Hour,
@@ -242,6 +248,11 @@ func DefaultGroupConfig() *Config {
 		Redis: RedisConfig{
 			Host: "localhost",
 			Port: "6379",
+		},
+		RabbitMQ: RabbitMQConfig{
+			URL:         "amqp://guest:guest@localhost:5672/",
+			Exchange:    "im_exchange",
+			QueuePrefix: "im_",
 		},
 		Log: LogConfig{
 			Level:  "info",

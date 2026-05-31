@@ -5,7 +5,9 @@ import (
 	"IM/pkg/auth"
 	"IM/pkg/config"
 	"IM/pkg/discovery"
+	pkgevent "IM/pkg/event"
 	"IM/pkg/logger"
+	"IM/pkg/mq"
 	"IM/services/gateway/handler"
 	"IM/services/gateway/middleware"
 	"IM/services/gateway/proxy"
@@ -85,21 +87,37 @@ func main() {
 	wsHandler := ws.NewHandler(hub, jwtUtil, redisClient)
 
 	// 初始化消息消费者（从 RabbitMQ 拉取消息推送给在线用户）
-	var msgConsumer *ws.MessageConsumer
+	var eventConsumer *ws.EventConsumer
 	if cfg.RabbitMQ.URL != "" {
-		queueName := cfg.RabbitMQ.QueuePrefix + "gateway"
-		msgConsumer, err = ws.NewMessageConsumer(hub, cfg.RabbitMQ.URL, cfg.RabbitMQ.Exchange, queueName)
+		mqConn, err := mq.NewConnection(cfg.RabbitMQ.URL)
 		if err != nil {
-			logger.Warnw("Failed to create message consumer, messages will not be pushed via WebSocket", "component", "gateway_cmd", "err", err)
+			logger.Warnw("Failed to connect to RabbitMQ, events will not be consumed", "component", "gateway_cmd", "err", err)
 		} else {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			if err := msgConsumer.Start(ctx); err != nil {
-				logger.Warnw("Failed to start message consumer", "component", "gateway_cmd", "err", err)
-			} else {
-				logger.Infow("Message consumer started", "component", "gateway_cmd", "queue", queueName)
+			defer mqConn.Close()
+
+			queueName := cfg.RabbitMQ.QueuePrefix + "gateway_events"
+			routingKeys := []string{
+				"message.#",
+				"friend_request.#",
+				"friendship.#",
+				"group.#",
+				"group_join_request.#",
+				"user.online",
+				"user.offline",
 			}
-			defer msgConsumer.Close()
+
+			subscriber, err := pkgevent.NewEventSubscriber(mqConn, cfg.RabbitMQ.Exchange, queueName, routingKeys)
+			if err != nil {
+				logger.Warnw("Failed to create event subscriber", "component", "gateway_cmd", "err", err)
+			} else {
+				eventConsumer = ws.NewEventConsumer(hub, subscriber)
+				if err := eventConsumer.Start(); err != nil {
+					logger.Warnw("Failed to start event consumer", "component", "gateway_cmd", "err", err)
+				} else {
+					logger.Infow("Event consumer started", "component", "gateway_cmd", "queue", queueName)
+				}
+				defer eventConsumer.Close()
+			}
 		}
 	}
 

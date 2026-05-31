@@ -4,6 +4,7 @@ package service
 import (
 	"IM/pkg/id"
 	"IM/pkg/logger"
+	pkgevent "IM/pkg/event"
 	"IM/services/group/domain/entity"
 	"IM/services/group/domain/event"
 	"IM/services/group/domain/repository"
@@ -30,7 +31,7 @@ type GroupService struct {
 	groupMemberRepo      repository.GroupMemberRepository
 	groupJoinRequestRepo repository.GroupJoinRequestRepository
 	idGenerator          *id.Generator
-	eventPublisher       *event.EventPublisher
+	eventPublisher       pkgevent.Publisher
 }
 
 // NewGroupService 创建 GroupService 实例。
@@ -39,7 +40,7 @@ func NewGroupService(
 	groupMemberRepo repository.GroupMemberRepository,
 	groupJoinRequestRepo repository.GroupJoinRequestRepository,
 	idGenerator *id.Generator,
-	eventPublisher *event.EventPublisher,
+	eventPublisher pkgevent.Publisher,
 ) *GroupService {
 	return &GroupService{
 		groupRepo:            groupRepo,
@@ -67,7 +68,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, ownerID, name, descripti
 	}
 
 	s.eventPublisher.Publish(&event.GroupCreatedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group.created",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,
@@ -116,7 +117,7 @@ func (s *GroupService) UpdateGroup(ctx context.Context, groupID, ownerID, name, 
 	}
 
 	s.eventPublisher.Publish(&event.GroupUpdatedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group.updated",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,
@@ -150,7 +151,7 @@ func (s *GroupService) DeleteGroup(ctx context.Context, groupID, ownerID string)
 	}
 
 	s.eventPublisher.Publish(&event.GroupDeletedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group.deleted",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,
@@ -195,7 +196,7 @@ func (s *GroupService) JoinGroup(ctx context.Context, userID, groupID, reason st
 	}
 
 	s.eventPublisher.Publish(&event.JoinRequestCreatedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group_join_request.created",
 			OccurredAt:  time.Now(),
 			AggregateID: requestID,
@@ -230,7 +231,7 @@ func (s *GroupService) LeaveGroup(ctx context.Context, userID, groupID string) (
 	}
 
 	s.eventPublisher.Publish(&event.MemberLeftEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group.member_left",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,
@@ -282,7 +283,7 @@ func (s *GroupService) AcceptJoinRequest(ctx context.Context, requestID, ownerID
 	}
 
 	s.eventPublisher.Publish(&event.JoinRequestAcceptedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group_join_request.accepted",
 			OccurredAt:  time.Now(),
 			AggregateID: requestID,
@@ -330,7 +331,7 @@ func (s *GroupService) RejectJoinRequest(ctx context.Context, requestID, ownerID
 	}
 
 	s.eventPublisher.Publish(&event.JoinRequestRejectedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group_join_request.rejected",
 			OccurredAt:  time.Now(),
 			AggregateID: requestID,
@@ -381,7 +382,7 @@ func (s *GroupService) ChangeMember(ctx context.Context, groupID, ownerID, membe
 	}
 
 	s.eventPublisher.Publish(&event.MemberRemovedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "Member_Role_Changed",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,
@@ -422,7 +423,7 @@ func (s *GroupService) RemoveMember(ctx context.Context, groupID, adminID, membe
 	}
 
 	s.eventPublisher.Publish(&event.MemberRemovedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group.member_removed",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,
@@ -499,7 +500,7 @@ func (s *GroupService) TransferOwner(ctx context.Context, groupID, ownerID, newO
 	}
 
 	s.eventPublisher.Publish(&event.OwnerTransferredEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "group.owner_transferred",
 			OccurredAt:  time.Now(),
 			AggregateID: groupID,

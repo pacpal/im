@@ -5,11 +5,12 @@ import (
 	"IM/api/gen/group"
 	"IM/pkg/config"
 	"IM/pkg/discovery"
+	pkgevent "IM/pkg/event"
 	"IM/pkg/id"
 	"IM/pkg/interceptor"
 	"IM/pkg/logger"
+	"IM/pkg/mq"
 	service "IM/services/group/application"
-	"IM/services/group/domain/event"
 	"IM/services/group/infrastructure/persistence"
 	"IM/services/group/infrastructure/persistence/model"
 	grpcserver "IM/services/group/interfaces/grpc"
@@ -70,7 +71,20 @@ func main() {
 	groupMemberRepo := persistence.NewGroupMemberRepository(db.GetDB())
 	groupJoinRequestRepo := persistence.NewGroupJoinRequestRepository(db.GetDB())
 
-	eventPublisher := event.NewEventPublisher()
+	mqConn, err := mq.NewConnection(cfg.RabbitMQ.URL)
+	if err != nil {
+		logger.Fatalw("Failed to connect to RabbitMQ", "component", "group_cmd", "err", err)
+	}
+	defer mqConn.Close()
+
+	rabbitPublisher, err := pkgevent.NewRabbitMQPublisher(mqConn, cfg.RabbitMQ.Exchange)
+	if err != nil {
+		logger.Fatalw("Failed to create rabbitmq publisher", "component", "group_cmd", "err", err)
+	}
+	defer rabbitPublisher.Close()
+
+	eventPublisher := pkgevent.NewEventBus(pkgevent.NewLocalEventBus(), rabbitPublisher)
+
 	groupService := service.NewGroupService(groupRepo, groupMemberRepo, groupJoinRequestRepo, idGenerator, eventPublisher)
 
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)

@@ -1,146 +1,385 @@
-// Package ws 提供消息消费者，将后端 MQ 消息推送给在线 WebSocket 客户端。
 package ws
 
 import (
+	"IM/pkg/event"
 	"IM/pkg/logger"
-	"context"
 	"encoding/json"
-	"time"
-
-	amqp091 "github.com/rabbitmq/amqp091-go"
 )
 
-// PushMessage 是网关推送给客户端的消息结构。
-type PushMessage struct {
-	MsgID      string `json:"msg_id"`
-	SenderID   string `json:"sender_id"`
-	ReceiverID string `json:"receiver_id"`
-	Content    string `json:"content"`
-	MsgType    string `json:"msg_type"`
-	Timestamp  int64  `json:"timestamp"`
-	IsGroup    bool   `json:"is_group"`
+type WSEventType string
+
+const (
+	WSEventMessageSent            WSEventType = "message.sent"
+	WSEventMessageRead            WSEventType = "message.read"
+	WSEventMessageRevoked         WSEventType = "message.revoked"
+	WSEventFriendRequestCreated   WSEventType = "friend_request.created"
+	WSEventFriendRequestAccepted  WSEventType = "friend_request.accepted"
+	WSEventFriendRequestRejected  WSEventType = "friend_request.rejected"
+	WSEventFriendshipDeleted      WSEventType = "friendship.deleted"
+	WSEventGroupCreated           WSEventType = "group.created"
+	WSEventGroupDeleted           WSEventType = "group.deleted"
+	WSEventMemberJoined           WSEventType = "group_join_request.accepted"
+	WSEventMemberLeft             WSEventType = "group.member_left"
+	WSEventMemberRemoved          WSEventType = "group.member_removed"
+	WSEventJoinRequestCreated     WSEventType = "group_join_request.created"
+	WSEventJoinRequestRejected    WSEventType = "group_join_request.rejected"
+	WSEventOwnerTransferred       WSEventType = "group.owner_transferred"
+	WSEventUserOnline             WSEventType = "user.online"
+	WSEventUserOffline            WSEventType = "user.offline"
+)
+
+type WSEventMessage struct {
+	Type      WSEventType `json:"type"`
+	Data      interface{} `json:"data"`
+	Timestamp int64       `json:"timestamp"`
 }
 
-// MessageConsumer 从 RabbitMQ 消费消息并推送给 WebSocket 用户。
-type MessageConsumer struct {
-	hub       *Hub
-	conn      *amqp091.Connection
-	channel   *amqp091.Channel
-	queueName string
-	exchange  string
+type EventConsumer struct {
+	subscriber *event.EventSubscriber
+	hub        *Hub
 }
 
-// NewMessageConsumer 创建并返回 MessageConsumer。
-func NewMessageConsumer(hub *Hub, amqpURL, exchange, queueName string) (*MessageConsumer, error) {
-	conn, err := amqp091.Dial(amqpURL)
-	if err != nil {
-		return nil, err
+func NewEventConsumer(hub *Hub, subscriber *event.EventSubscriber) *EventConsumer {
+	c := &EventConsumer{
+		subscriber: subscriber,
+		hub:        hub,
 	}
 
-	ch, err := conn.Channel()
-	if err != nil {
-		conn.Close()
-		return nil, err
-	}
-
-	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, err
-	}
-
-	if _, err := ch.QueueDeclare(queueName, true, false, false, false, nil); err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, err
-	}
-
-	// 绑定通配符路由键，接收所有用户消息
-	if err := ch.QueueBind(queueName, "message.*", exchange, false, nil); err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, err
-	}
-
-	return &MessageConsumer{
-		hub:       hub,
-		conn:      conn,
-		channel:   ch,
-		queueName: queueName,
-		exchange:  exchange,
-	}, nil
+	c.registerHandlers()
+	return c
 }
 
-// Start 启动后台协程消费消息。
-func (c *MessageConsumer) Start(ctx context.Context) error {
-	msgs, err := c.channel.Consume(c.queueName, "", false, false, false, false, nil)
+func (c *EventConsumer) registerHandlers() {
+	c.subscriber.Register("message.sent", c.handleMessageSent)
+	c.subscriber.Register("message.read", c.handleMessageRead)
+	c.subscriber.Register("message.revoked", c.handleMessageRevoked)
+	c.subscriber.Register("friend_request.created", c.handleFriendRequestCreated)
+	c.subscriber.Register("friend_request.accepted", c.handleFriendRequestAccepted)
+	c.subscriber.Register("friend_request.rejected", c.handleFriendRequestRejected)
+	c.subscriber.Register("friendship.deleted", c.handleFriendshipDeleted)
+	c.subscriber.Register("group.created", c.handleGroupCreated)
+	c.subscriber.Register("group.deleted", c.handleGroupDeleted)
+	c.subscriber.Register("group_join_request.accepted", c.handleMemberJoined)
+	c.subscriber.Register("group.member_left", c.handleMemberLeft)
+	c.subscriber.Register("group.member_removed", c.handleMemberRemoved)
+	c.subscriber.Register("group_join_request.created", c.handleJoinRequestCreated)
+	c.subscriber.Register("group_join_request.rejected", c.handleJoinRequestRejected)
+	c.subscriber.Register("group.owner_transferred", c.handleOwnerTransferred)
+	c.subscriber.Register("user.online", c.handleUserOnline)
+	c.subscriber.Register("user.offline", c.handleUserOffline)
+}
+
+func (c *EventConsumer) Start() error {
+	return c.subscriber.Start()
+}
+
+func (c *EventConsumer) Close() error {
+	return c.subscriber.Close()
+}
+
+func (c *EventConsumer) pushToUser(userID string, msgType WSEventType, data interface{}, timestamp int64) {
+	wsMsg := WSEventMessage{
+		Type:      msgType,
+		Data:      data,
+		Timestamp: timestamp,
+	}
+
+	payload, err := json.Marshal(wsMsg)
 	if err != nil {
+		logger.Errorw("Failed to marshal WS event", "component", "event_consumer", "err", err)
+		return
+	}
+
+	if c.hub.IsOnline(userID) {
+		c.hub.SendToUser(userID, payload)
+	}
+}
+
+func (c *EventConsumer) handleMessageSent(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		MessageID  string `json:"MessageID"`
+		SenderID   string `json:"SenderID"`
+		ReceiverID string `json:"ReceiverID"`
+		MsgType    string `json:"MsgType"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
 		return err
 	}
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case msg, ok := <-msgs:
-				if !ok {
-					return
-				}
-				c.handleMessage(msg)
-			}
-		}
-	}()
-
+	c.pushToUser(evt.ReceiverID, WSEventMessageSent, map[string]interface{}{
+		"message_id":  evt.MessageID,
+		"sender_id":   evt.SenderID,
+		"receiver_id": evt.ReceiverID,
+		"msg_type":    evt.MsgType,
+	}, evt.OccurredAt.Unix())
 	return nil
 }
 
-func (c *MessageConsumer) handleMessage(msg amqp091.Delivery) {
-	var pushMsg PushMessage
-	if err := json.Unmarshal(msg.Body, &pushMsg); err != nil {
-		logger.Warnw("Failed to unmarshal push message", "component", "gateway_consumer", "err", err)
-		msg.Nack(false, false)
-		return
+func (c *EventConsumer) handleMessageRead(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		MessageID string `json:"MessageID"`
+		UserID    string `json:"UserID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
 	}
 
-	data, err := json.Marshal(pushMsg)
-	if err != nil {
-		msg.Nack(false, false)
-		return
-	}
-
-	// 如果用户在线则推送
-	if c.hub.IsOnline(pushMsg.ReceiverID) {
-		c.hub.SendToUser(pushMsg.ReceiverID, data)
-		logger.Infow("Push message to user", "component", "gateway_consumer", "user", pushMsg.ReceiverID, "msg_id", pushMsg.MsgID)
-		msg.Ack(false)
-	} else {
-		// 用户不在线，不处理，让消息服务通过离线消息处理
-		msg.Nack(false, true)
-	}
-}
-
-// Close 关闭消费者连接。
-func (c *MessageConsumer) Close() error {
-	if c.channel != nil {
-		c.channel.Close()
-	}
-	if c.conn != nil {
-		return c.conn.Close()
-	}
+	c.pushToUser(evt.UserID, WSEventMessageRead, map[string]interface{}{
+		"message_id": evt.MessageID,
+	}, evt.OccurredAt.Unix())
 	return nil
 }
 
-// WaitForRabbitMQ 简单重试等待 RabbitMQ 可用。
-func WaitForRabbitMQ(amqpURL string, maxRetries int, interval time.Duration) (*amqp091.Connection, error) {
-	var conn *amqp091.Connection
-	var err error
-	for i := 0; i < maxRetries; i++ {
-		conn, err = amqp091.Dial(amqpURL)
-		if err == nil {
-			return conn, nil
-		}
-		time.Sleep(interval)
+func (c *EventConsumer) handleMessageRevoked(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		MessageID string `json:"MessageID"`
+		UserID    string `json:"UserID"`
 	}
-	return nil, err
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.UserID, WSEventMessageRevoked, map[string]interface{}{
+		"message_id": evt.MessageID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleFriendRequestCreated(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		RequestID string `json:"RequestID"`
+		FromUID   string `json:"FromUID"`
+		ToUID     string `json:"ToUID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.ToUID, WSEventFriendRequestCreated, map[string]interface{}{
+		"request_id": evt.RequestID,
+		"from_uid":   evt.FromUID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleFriendRequestAccepted(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		RequestID string `json:"RequestID"`
+		FromUID   string `json:"FromUID"`
+		ToUID     string `json:"ToUID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.FromUID, WSEventFriendRequestAccepted, map[string]interface{}{
+		"request_id": evt.RequestID,
+		"to_uid":     evt.ToUID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleFriendRequestRejected(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		RequestID string `json:"RequestID"`
+		FromUID   string `json:"FromUID"`
+		ToUID     string `json:"ToUID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.FromUID, WSEventFriendRequestRejected, map[string]interface{}{
+		"request_id": evt.RequestID,
+		"to_uid":     evt.ToUID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleFriendshipDeleted(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		UserID   string `json:"UserID"`
+		FriendID string `json:"FriendID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.FriendID, WSEventFriendshipDeleted, map[string]interface{}{
+		"user_id": evt.UserID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleGroupCreated(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		GroupID string `json:"GroupID"`
+		Name    string `json:"Name"`
+		OwnerID string `json:"OwnerID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.OwnerID, WSEventGroupCreated, map[string]interface{}{
+		"group_id": evt.GroupID,
+		"name":     evt.Name,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleGroupDeleted(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		GroupID string `json:"GroupID"`
+		OwnerID string `json:"OwnerID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.OwnerID, WSEventGroupDeleted, map[string]interface{}{
+		"group_id": evt.GroupID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleMemberJoined(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		RequestID string `json:"RequestID"`
+		UserID    string `json:"UserID"`
+		GroupID   string `json:"GroupID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.UserID, WSEventMemberJoined, map[string]interface{}{
+		"group_id": evt.GroupID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleMemberLeft(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		GroupID string `json:"GroupID"`
+		UserID  string `json:"UserID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.UserID, WSEventMemberLeft, map[string]interface{}{
+		"group_id": evt.GroupID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleMemberRemoved(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		GroupID string `json:"GroupID"`
+		UserID  string `json:"UserID"`
+		AdminID string `json:"AdminID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.UserID, WSEventMemberRemoved, map[string]interface{}{
+		"group_id": evt.GroupID,
+		"admin_id": evt.AdminID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleJoinRequestCreated(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		RequestID string `json:"RequestID"`
+		UserID    string `json:"UserID"`
+		GroupID   string `json:"GroupID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.UserID, WSEventJoinRequestCreated, map[string]interface{}{
+		"request_id": evt.RequestID,
+		"group_id":   evt.GroupID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleJoinRequestRejected(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		RequestID string `json:"RequestID"`
+		UserID    string `json:"UserID"`
+		GroupID   string `json:"GroupID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.UserID, WSEventJoinRequestRejected, map[string]interface{}{
+		"request_id": evt.RequestID,
+		"group_id":   evt.GroupID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleOwnerTransferred(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		GroupID    string `json:"GroupID"`
+		OldOwnerID string `json:"OldOwnerID"`
+		NewOwnerID string `json:"NewOwnerID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.pushToUser(evt.NewOwnerID, WSEventOwnerTransferred, map[string]interface{}{
+		"group_id":     evt.GroupID,
+		"old_owner_id": evt.OldOwnerID,
+	}, evt.OccurredAt.Unix())
+	return nil
+}
+
+func (c *EventConsumer) handleUserOnline(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		UserID string `json:"UserID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	c.hub.Broadcast(nil)
+	_ = evt.UserID
+	return nil
+}
+
+func (c *EventConsumer) handleUserOffline(data []byte) error {
+	var evt struct {
+		event.BaseEvent
+		UserID string `json:"UserID"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return err
+	}
+
+	_ = evt.UserID
+	return nil
 }

@@ -26,6 +26,11 @@ redis:
   password: ""
   db: 0
 
+rabbitmq:
+  url: amqp://admin:zxcvbnm123rabbitmq@localhost:5672/
+  exchange: im_exchange
+  queue_prefix: im_
+
 jwt:
   secret: zxcvbnm123
   expire: 24h

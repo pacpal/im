@@ -5,6 +5,7 @@ import (
 	"IM/pkg/auth"
 	"IM/pkg/id"
 	"IM/pkg/logger"
+	pkgevent "IM/pkg/event"
 	"IM/services/user/domain/entity"
 	"IM/services/user/domain/event"
 	"IM/services/user/domain/repository"
@@ -37,7 +38,7 @@ type UserService struct {
 	userCache         *cache.UserCache
 	idGenerator       *id.SnowflakeGenerator
 	jwtUtil           *auth.JWTUtil
-	eventPublisher    *event.EventPublisher
+	eventPublisher    pkgevent.Publisher
 }
 
 // NewUserService 构造 UserService。
@@ -48,7 +49,7 @@ func NewUserService(
 	userCache *cache.UserCache,
 	idGenerator *id.SnowflakeGenerator,
 	jwtUtil *auth.JWTUtil,
-	eventPublisher *event.EventPublisher,
+	eventPublisher pkgevent.Publisher,
 ) *UserService {
 	return &UserService{
 		userRepo:          userRepo,
@@ -89,7 +90,7 @@ func (s *UserService) Register(ctx context.Context, tele, name, password string)
 	}
 
 	s.eventPublisher.Publish(&event.UserRegisteredEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "user.registered",
 			OccurredAt:  time.Now(),
 			AggregateID: res.ID,
@@ -131,7 +132,7 @@ func (s *UserService) Login(ctx context.Context, tele, id, password string) (res
 	}
 
 	s.eventPublisher.Publish(&event.UserLoggedInEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "user.logged_in",
 			OccurredAt:  time.Now(),
 			AggregateID: res.ID,
@@ -248,7 +249,7 @@ func (s *UserService) AddFriend(ctx context.Context, fromUID, toUID, reason stri
 	logger.Infow("AddFriend: friend request created", "component", "user_service", "request_id", requestID, "from", fromUID, "to", toUID)
 
 	s.eventPublisher.Publish(&event.FriendRequestCreatedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "friend_request.created",
 			OccurredAt:  time.Now(),
 			AggregateID: requestID,
@@ -300,7 +301,7 @@ func (s *UserService) AcceptFriendRequest(ctx context.Context, requestID, accept
 	}
 
 	s.eventPublisher.Publish(&event.FriendRequestAcceptedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "friend_request.accepted",
 			OccurredAt:  time.Now(),
 			AggregateID: requestID,
@@ -341,7 +342,7 @@ func (s *UserService) RejectFriendRequest(ctx context.Context, requestID, reject
 	}
 
 	s.eventPublisher.Publish(&event.FriendRequestRejectedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "friend_request.rejected",
 			OccurredAt:  time.Now(),
 			AggregateID: requestID,
@@ -378,7 +379,7 @@ func (s *UserService) RemoveFriend(ctx context.Context, userID, friendID string)
 	}
 
 	s.eventPublisher.Publish(&event.FriendshipDeletedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "friendship.deleted",
 			OccurredAt:  time.Now(),
 			AggregateID: userID,

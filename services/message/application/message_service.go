@@ -4,6 +4,7 @@ package service
 import (
 	"IM/pkg/id"
 	"IM/pkg/logger"
+	pkgevent "IM/pkg/event"
 	"IM/services/message/domain/entity"
 	"IM/services/message/domain/event"
 	"IM/services/message/domain/repository"
@@ -24,7 +25,7 @@ type MessageService struct {
 	messageCache    repository.MessageCache
 	messageProducer MessageProducer
 	idGenerator     *id.SnowflakeGenerator
-	eventPublisher  *event.EventPublisher
+	eventPublisher  pkgevent.Publisher
 }
 
 // MessageProducer 定义消息发布的接口（MQ 层）。
@@ -38,7 +39,7 @@ func NewMessageService(
 	messageCache repository.MessageCache,
 	messageProducer MessageProducer,
 	idGenerator *id.SnowflakeGenerator,
-	eventPublisher *event.EventPublisher,
+	eventPublisher pkgevent.Publisher,
 ) *MessageService {
 	return &MessageService{
 		messageRepo:     messageRepo,
@@ -69,7 +70,7 @@ func (s *MessageService) SendMessage(ctx context.Context, senderID, receiverID, 
 	}
 
 	s.eventPublisher.Publish(&event.MessageSentEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "message.sent",
 			OccurredAt:  time.Now(),
 			AggregateID: messageID,
@@ -137,7 +138,7 @@ func (s *MessageService) MarkAsRead(ctx context.Context, messageID, userID strin
 	}
 
 	s.eventPublisher.Publish(&event.MessageReadEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "message.read",
 			OccurredAt:  time.Now(),
 			AggregateID: messageID,
@@ -213,7 +214,7 @@ func (s *MessageService) RevokeMessage(ctx context.Context, messageID, userID st
 	}
 
 	s.eventPublisher.Publish(&event.MessageRevokedEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "message.revoked",
 			OccurredAt:  time.Now(),
 			AggregateID: messageID,
@@ -235,7 +236,7 @@ func (s *MessageService) SetUserOnline(ctx context.Context, userID string) (err 
 	}
 
 	s.eventPublisher.Publish(&event.UserOnlineEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "user.online",
 			OccurredAt:  time.Now(),
 			AggregateID: userID,
@@ -256,7 +257,7 @@ func (s *MessageService) SetUserOffline(ctx context.Context, userID string) (err
 	}
 
 	s.eventPublisher.Publish(&event.UserOfflineEvent{
-		BaseEvent: event.BaseEvent{
+		BaseEvent: pkgevent.BaseEvent{
 			EventType:   "user.offline",
 			OccurredAt:  time.Now(),
 			AggregateID: userID,

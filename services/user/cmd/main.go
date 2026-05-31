@@ -6,11 +6,12 @@ import (
 	"IM/pkg/auth"
 	"IM/pkg/config"
 	"IM/pkg/discovery"
+	pkgevent "IM/pkg/event"
 	"IM/pkg/id"
 	"IM/pkg/interceptor"
 	"IM/pkg/logger"
+	"IM/pkg/mq"
 	service "IM/services/user/application"
-	"IM/services/user/domain/event"
 	"IM/services/user/infrastructure/cache"
 	"IM/services/user/infrastructure/persistence"
 	"IM/services/user/infrastructure/persistence/model"
@@ -81,7 +82,20 @@ func main() {
 	friendRequestRepo := persistence.NewFriendRequestRepository(db.GetDB())
 	userCache := cache.NewUserCache(redisClient)
 
-	eventPublisher := event.NewEventPublisher()
+	mqConn, err := mq.NewConnection(cfg.RabbitMQ.URL)
+	if err != nil {
+		logger.Fatalw("Failed to connect to RabbitMQ", "component", "user_cmd", "err", err)
+	}
+	defer mqConn.Close()
+
+	rabbitPublisher, err := pkgevent.NewRabbitMQPublisher(mqConn, cfg.RabbitMQ.Exchange)
+	if err != nil {
+		logger.Fatalw("Failed to create rabbitmq publisher", "component", "user_cmd", "err", err)
+	}
+	defer rabbitPublisher.Close()
+
+	eventPublisher := pkgevent.NewEventBus(pkgevent.NewLocalEventBus(), rabbitPublisher)
+
 	userService := service.NewUserService(userRepo, friendshipRepo, friendRequestRepo, userCache, idGenerator, jwtUtil, eventPublisher)
 
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
